@@ -1,28 +1,26 @@
 import React, { useState } from 'react';
-import { ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import DateRangeSlider from "../components/DateRangeSlider";
+import {
+    ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line
+} from 'recharts';
 import { Row, Col } from "react-bootstrap";
+import DateRangeSlider from "../components/DateRangeSlider";
 
-function CardEV({ data, title }) {
+function CardPricing({ data, title }) {
     const updatedData = data.map((item) => ({
         ...item,
-        timestamp: new Date(`${item['Time Step']}`).getTime(), // Convert time step to timestamp
-        // Replace -1 values with null for proper rendering
-        'electric_vehicle_estimated_soc_arrival': item['electric_vehicle_estimated_soc_arrival'] === "-0.1" ? null : item['electric_vehicle_estimated_soc_arrival'],
-        'electric_vehicle_required_soc_departure': item['electric_vehicle_required_soc_departure'] === "-0.1" ? null : item['electric_vehicle_required_soc_departure'],
-        'electric_vehicle_soc': item['electric_vehicle_soc'] === "-1.0" ? null : item['electric_vehicle_soc'],
+        timestamp: new Date(`${item['Time Step']}`).getTime()
     }));
 
-    // Definir limites da data inicial e final com base nos dados do gráfico
+    // Defining initial and final date limits based on the chart data
     const minTimestamp = updatedData[0]?.timestamp || 0;
     const maxTimestamp = updatedData[updatedData.length - 1]?.timestamp || 0;
 
-    //Valor inicial do filtro - para não carregar muitos dados de uma vez
+    // Initial filter value - to avoid loading too many data at once
     const filterTimestamp = updatedData[240]?.timestamp || 0;
 
     const [sliderValues, setSliderValues] = useState([minTimestamp, filterTimestamp]);
 
-    //Filtragem com base nas datas
+    // Filtering based on the date range selected by the user
     const filteredData = updatedData.filter(
         (item) => item.timestamp >= sliderValues[0] && item.timestamp <= sliderValues[1]
     );
@@ -32,9 +30,10 @@ function CardEV({ data, title }) {
     };
 
     const [visibleSeries, setVisibleSeries] = useState({
-        'electric_vehicle_estimated_soc_arrival': true,
-        'electric_vehicle_required_soc_departure': true,
-        'electric_vehicle_soc': true
+        'electricity_pricing-$/kWh': true,
+        'electricity_pricing_predicted_1-$/kWh': true,
+        'electricity_pricing_predicted_2-$/kWh': true,
+        'electricity_pricing_predicted_3-$/kWh': true
     });
 
     const handleCheckboxChange = (seriesKey) => {
@@ -48,27 +47,19 @@ function CardEV({ data, title }) {
         return tick.slice(0, 10);
     };
 
-    const totalDays = Math.floor(filteredData.length / 24); //ISTO VAI MUDAR COM O INTERVALO
+    const totalDays = Math.floor(filteredData.length / 24);
     const tickCount = Math.min(totalDays, 10);
 
     const interval = tickCount < 10 ? (Math.floor(totalDays / tickCount) * 24) : Math.floor(filteredData.length / 10);
 
-    const formatYAxis = (tick) => {
-        return tick * 100;
-    };
-
     return (
         <>
-            <div className='d-flex justify-content-between'>
-                <h5>{title}</h5>
-                <h5>Interval: 1 hour</h5>
-            </div>
-
-            <div style={{ marginBottom: '10px' }}>
+            <h5>{title}</h5>
+            <div className='d-flex align-items-center' style={{ marginBottom: '10px' }}>
                 {/* Array of series keys and labels */}
                 <Row>
                     {Object.keys(visibleSeries).map((key) => (
-                        <Col key={key}>
+                        <Col key={key} md={4}>
                             <label key={key} className='d-flex align-items-center'>
                                 <input
                                     type="checkbox"
@@ -84,17 +75,17 @@ function CardEV({ data, title }) {
             </div>
 
             <ResponsiveContainer width={"100%"} height={300}>
-                <ComposedChart data={filteredData}>
+                <ComposedChart data={filteredData} stackOffset="sign">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                         dataKey="Time Step"
                         angle='-8'
-                        interval={interval} tickFormatter={(tick, index) => formatXAxis(tick)}
+                        interval={interval}
+                        tickFormatter={(tick, index) => formatXAxis(tick)}
                     />
-                    <YAxis
-                        tickFormatter={(tick, index) => formatYAxis(tick)}
-                        label={{ value: '%', angle: -90, position: 'insideLeft' }}
-                        domain={[0, 1]} />
+
+                    <YAxis label={{ value: '$/kWh', angle: -90, position: 'insideLeft' }} />
+
                     <Tooltip
                         labelFormatter={(label) => {
                             const date = new Date(label);
@@ -107,16 +98,21 @@ function CardEV({ data, title }) {
                                 hour12: false,
                             });
                         }}
-                        formatter={(value, name) => [`${value * 100} %`, `${name}`]} />
+                    />
+
                     <Legend />
-                    {visibleSeries['electric_vehicle_estimated_soc_arrival'] && (
-                        <Line type="monotone" dataKey="electric_vehicle_estimated_soc_arrival" stroke="#8884d8" />
+
+                    {visibleSeries['electricity_pricing-$/kWh'] && (
+                        <Line type="monotone" dataKey="electricity_pricing-$/kWh" stroke="#FF7300" />
                     )}
-                    {visibleSeries['electric_vehicle_required_soc_departure'] && (
-                        <Line type="monotone" dataKey="electric_vehicle_required_soc_departure" stroke="#82ca9d" />
+                    {visibleSeries['electricity_pricing_predicted_1-$/kWh'] && (
+                        <Line type="monotone" dataKey="electricity_pricing_predicted_1-$/kWh" stroke="#8884d8" />
                     )}
-                    {visibleSeries['electric_vehicle_soc'] && (
-                        <Line type="monotone" dataKey="electric_vehicle_soc" stroke="#ff7300" />
+                    {visibleSeries['electricity_pricing_predicted_2-$/kWh'] && (
+                        <Line type="monotone" dataKey="electricity_pricing_predicted_2-$/kWh" stroke="#82ca9d" />
+                    )}
+                    {visibleSeries['electricity_pricing_predicted_3-$/kWh'] && (
+                        <Line type="monotone" dataKey="electricity_pricing_predicted_3-$/kWh" stroke="#0088FE" />
                     )}
                 </ComposedChart>
             </ResponsiveContainer>
@@ -131,4 +127,4 @@ function CardEV({ data, title }) {
     );
 }
 
-export default CardEV;
+export default CardPricing;

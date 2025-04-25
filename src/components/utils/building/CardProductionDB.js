@@ -33,10 +33,11 @@ const ceilToEndOfDayUTC = (timestamp) => {
     return date.getTime();
 };
 
-function CardConsumption({ data, title }) {
+function CardProductionDB({ data, title }) {
     const updatedData = data.map((item) => ({
         ...item,
-        timestamp: new Date(`${item['Time Step']}`).getTime(),
+        'Time Step': item['timestamp'],
+        timestamp: new Date(item['timestamp']).getTime()
     }));
 
     const minTimestamp = floorToMidnightUTC(updatedData[0]?.timestamp) || 0;
@@ -48,7 +49,7 @@ function CardConsumption({ data, title }) {
         : 1;
 
     const pointsPerDay = Math.floor((24 * 60) / baseIntervalMinutes);
-    const defaultDataPoints = pointsPerDay * 10; // 10 days
+    const defaultDataPoints = pointsPerDay * 2; // 2 days
     const defaultFilterEnd = ceilToEndOfDayUTC(updatedData[defaultDataPoints]?.timestamp || maxTimestamp);
     const [sliderValues, setSliderValues] = useState([minTimestamp, defaultFilterEnd]);
 
@@ -79,9 +80,8 @@ function CardConsumption({ data, title }) {
             } else {
                 result.push({
                     timestamp: groupStart,
-                    'Time Step': tempGroup[0]['Time Step'],
-                    'Non-shiftable Load-kWh': tempGroup.reduce((sum, i) => sum + Number(i['Non-shiftable Load-kWh']), 0),
-                    'Net Electricity Consumption-kWh': tempGroup.reduce((sum, i) => sum + Number(i['Net Electricity Consumption-kWh']), 0),
+                    'Time Step': new Date(groupStart).toISOString(),
+                    solar_generation: tempGroup.reduce((sum, i) => sum + i.solar_generation, 0)
                 });
                 groupStart = item.timestamp;
                 tempGroup = [item];
@@ -91,9 +91,8 @@ function CardConsumption({ data, title }) {
         if (tempGroup.length > 0) {
             result.push({
                 timestamp: groupStart,
-                'Time Step': tempGroup[0]['Time Step'],
-                'Non-shiftable Load-kWh': tempGroup.reduce((sum, i) => sum + Number(i['Non-shiftable Load-kWh']), 0),
-                'Net Electricity Consumption-kWh': tempGroup.reduce((sum, i) => sum + Number(i['Net Electricity Consumption-kWh']), 0),
+                'Time Step': new Date(groupStart).toISOString(),
+                solar_generation: tempGroup.reduce((sum, i) => sum + i.solar_generation, 0)
             });
         }
 
@@ -104,25 +103,24 @@ function CardConsumption({ data, title }) {
 
     const getMidnightTicks = (data, intervalMinutes) => {
         if (!data.length) return [];
+
         const seen = new Set();
         const ticks = [];
-    
+
         for (const item of data) {
             const d = new Date(item.timestamp);
-            const isNearMidnight = d.getUTCHours() === 0 && d.getUTCMinutes() < intervalMinutes;
-    
+            const isNearMidnight =
+                d.getUTCHours() === 0 && d.getUTCMinutes() < intervalMinutes;
+
             if (isNearMidnight) {
-                const midnightUTC = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
-                
-                // Get the tick, and store it if it hasn't been added before
-                const tick = midnightUTC.toISOString().slice(0,19); // Converts to ISO format string
+                const tick = item['Time Step'];
                 if (!seen.has(tick)) {
                     seen.add(tick);
                     ticks.push(tick);
                 }
             }
         }
-    
+
         return ticks;
     };
 
@@ -143,22 +141,15 @@ function CardConsumption({ data, title }) {
                             min={baseIntervalMinutes}
                             max={60}
                             value={intervalInput}
-                            onChange={(e) => {
-                                const val = parseInt(e.target.value);
-                                setIntervalInput(Number.isNaN(val) ? baseIntervalMinutes : val);
-                            }}
-                            style={{ width: "80px", marginRight: "10px", marginLeft: "5px" }}
+                            onChange={(e) => setIntervalInput(parseInt(e.target.value) || baseIntervalMinutes)}
+                            style={{ width: "80px", marginRight: "10px" }}
                         />
                     </label>
                     <Button
                         className="p-2"
                         variant="secondary"
                         onClick={handleApplyInterval}
-                        disabled={
-                            intervalInput < baseIntervalMinutes ||
-                            intervalInput > 60 ||
-                            intervalInput === timeInterval
-                        }
+                        disabled={intervalInput < baseIntervalMinutes || intervalInput > 60}
                     >
                         Apply
                     </Button>
@@ -178,6 +169,7 @@ function CardConsumption({ data, title }) {
                     <Tooltip
                         labelFormatter={(label) => {
                             const date = new Date(label);
+                            date.setHours(date.getHours() - 1);
                             return date.toLocaleString("en-US", {
                                 month: "short",
                                 day: "2-digit",
@@ -190,8 +182,7 @@ function CardConsumption({ data, title }) {
                         formatter={(value, name) => [`${value.toFixed(3)} kWh`, name]}
                     />
                     <Legend />
-                    <Bar dataKey="Non-shiftable Load-kWh" stackId="a" fill="#8884d8" />
-                    <Bar dataKey="Net Electricity Consumption-kWh" stackId="a" fill="#82ca9d" />
+                    <Bar dataKey="solar_generation" stackId="a" fill="#8884d8" />
                 </ComposedChart>
             </ResponsiveContainer>
 
@@ -205,4 +196,4 @@ function CardConsumption({ data, title }) {
     );
 }
 
-export default CardConsumption;
+export default CardProductionDB;

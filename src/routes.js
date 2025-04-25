@@ -16,21 +16,14 @@
 
 */
 import RecDashboard from "pages/dashboard-page/RecDashboard.js";
-import Dashboard from "pages/dashboard-2-page/Dashboard.js";
+import UseCases from "pages/use-cases-page/UseCases.js";
 import KPIs from "pages/kpis-page/KPIs.js";
 import Maps from "pages/map-page/Maps.js";
 import SimualtionListPage from "pages/simulation-list-page/SimualtionListPage.js";
 import SchemaPage from "pages/schema-page/SchemaPage.js";
+import RunSimulations from "pages/run-simulations-page/RunSimulations";
 
 const dashboardRoutes = [
-  // {
-  //   upgrade: true,
-  //   path: "/upgrade",
-  //   name: "Upgrade to PRO",
-  //   icon: "nc-icon nc-alien-33",
-  //   component: Upgrade,
-  //   layout: "/admin"
-  // },
   {
     path: "/rec-dashboard",
     name: "REC Dashboard",
@@ -39,10 +32,10 @@ const dashboardRoutes = [
     layout: "/admin"
   },
   {
-    path: "/dashboard",
-    name: "Dashboard",
+    path: "/use-cases",
+    name: "Use Cases",
     icon: "nc-icon nc-chart-pie-35",
-    component: Dashboard,
+    component: UseCases,
     layout: "/admin"
   },
   {
@@ -71,6 +64,13 @@ const dashboardRoutes = [
     name: "Schema",
     icon: "nc-icon nc-puzzle-10",
     component: SchemaPage,
+    layout: "/admin"
+  },
+  {
+    path: "/run-simulations",
+    name: "Run Simulations",
+    icon: "nc-icon nc-button-play",
+    component: RunSimulations,
     layout: "/admin"
   }
 ];

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Button,
   Card,
@@ -11,12 +11,18 @@ import {
   Modal,
   Form
 } from "react-bootstrap";
+import { FaUpload } from "react-icons/fa";
 import SelectSimulationModal from "../../components/shared/SelectSimulationModal";
 import Papa from "papaparse";
 
 function KPIs() {
   const [show, setShow] = useState(false); // Initial modal state
   const [showCompare, setShowCompare] = useState(false); // Initial modal state
+
+  const fileInputRef = useRef(null);
+  const handleUploadClick = () => {
+    fileInputRef.current.click();
+  };
 
   // Select simulation and simulation to compare from in case of comparison flow
   const [selectedSimulations, setSelectedSimulations] = useState([]);
@@ -83,7 +89,6 @@ function KPIs() {
     setComparisonSimulation(result);
   };
 
-
   const handleFolderUpload = async (event) => {
     const files = Array.from(event.target.files);
     const folderNames = new Set();
@@ -142,13 +147,26 @@ function KPIs() {
       <Container fluid>
         <Row>
           <Col>
+            {/* Hidden File Input */}
             <input
               type="file"
               webkitdirectory="true"
               multiple
               onChange={handleFolderUpload}
+              ref={fileInputRef}
+              style={{ display: "none" }}
             />
+
+            <Button
+              className="d-flex align-items-center"
+              variant="secondary"
+              onClick={handleUploadClick}
+            >
+              <FaUpload style={{ marginRight: "10px" }} />
+              Upload Simulations
+            </Button>
           </Col>
+
           {simulationFolders.length > 0 && (
             <Col className="d-flex flex-row-reverse">
               <Button variant="primary" onClick={handleOpen}>Select Simulations</Button>
@@ -170,7 +188,7 @@ function KPIs() {
               simulationList={selectedSimulations.filter(s => s !== simulationToCompareFrom)}
             />
 
-            <Tabs defaultActiveKey={selectedSimulations.sort()[0]} id="simulation-tabs" className="mb-3">
+            <Tabs defaultActiveKey={selectedSimulations.sort()[0]} id="simulation-tabs" className="mt-3 mb-3">
               {selectedSimulations.sort().map((simulation, index) => (
 
                 <Tab eventKey={simulation} title={simulation} key={index}>
@@ -306,6 +324,12 @@ function KPIs() {
 
 function SelectSimulationCompareModal({ onSelectionChange, showCompare, setShowCompare, simulationList }) {
   const [selectedSimulation, setSelectedSimulation] = useState(null);
+
+  useEffect(() => {
+    if (showCompare) {
+      setSelectedSimulation(null);
+    }
+  }, [showCompare]);
 
   const handleClose = () => setShowCompare(false);
 

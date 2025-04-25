@@ -1,53 +1,180 @@
 import React, { useState } from "react";
-import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar } from "recharts";
+import {
+    ResponsiveContainer,
+    ComposedChart,
+    CartesianGrid,
+    XAxis,
+    YAxis,
+    Tooltip,
+    Legend,
+    Bar
+} from "recharts";
+import { Button } from "react-bootstrap";
 import DateRangeSlider from "../components/DateRangeSlider";
+
+// Helper functions to adjust timestamps to full days
+const floorToMidnightUTC = (timestamp) => {
+    const date = new Date(timestamp);
+
+    if(date.getHours() != 0 || date.getMinutes() != 0 || date.getSeconds() != 0) {
+        date.setUTCHours(0, 0, 0, 0);
+    }
+
+    return date.getTime();
+};
+
+const ceilToEndOfDayUTC = (timestamp) => {
+    const date = new Date(timestamp);
+
+    if(date.getHours() != 23 || date.getMinutes() != 59 || date.getSeconds() != 59) {
+        date.setUTCHours(23, 59, 59, 999);
+    }
+
+    return date.getTime();
+};
 
 function CardProduction({ data, title }) {
     const updatedData = data.map((item) => ({
         ...item,
-        timestamp: new Date(`${item['Time Step']}`).getTime(), // Novo campo para filtragem das datas
+        timestamp: new Date(`${item['Time Step']}`).getTime(),
     }));
 
-    // Definir limites da data inicial e final com base nos dados do gráfico
-    const minTimestamp = updatedData[0]?.timestamp || 0;
-    const maxTimestamp = updatedData[updatedData.length - 1]?.timestamp || 0;
+    const minTimestamp = floorToMidnightUTC(updatedData[0]?.timestamp) || 0;
+    const maxTimestamp = ceilToEndOfDayUTC(updatedData[updatedData.length - 1]?.timestamp) || 0;
 
-    //Valor inicial do filtro - para não carregar muitos dados de uma vez
-    const filterTimestamp = updatedData[240]?.timestamp || 0;
+    // Calculate base interval for an input
+    const baseIntervalMinutes = updatedData.length > 1
+        ? Math.round((updatedData[1].timestamp - updatedData[0].timestamp) / (60 * 1000))
+        : 1;
 
-    const [sliderValues, setSliderValues] = useState([minTimestamp, filterTimestamp]);
+    const pointsPerDay = Math.floor((24 * 60) / baseIntervalMinutes);
+    const defaultDataPoints = pointsPerDay * 10; // 10 days
+    const defaultFilterEnd = ceilToEndOfDayUTC(updatedData[defaultDataPoints]?.timestamp || maxTimestamp);
+    const [sliderValues, setSliderValues] = useState([minTimestamp, defaultFilterEnd]);
 
-    //Filtragem com base nas datas
+    const [timeInterval, setTimeInterval] = useState(baseIntervalMinutes);
+    const [intervalInput, setIntervalInput] = useState(baseIntervalMinutes);
+
+    const handleSliderChange = (values) => setSliderValues(values);
+
+    const handleApplyInterval = () => {
+        const clamped = Math.max(baseIntervalMinutes, Math.min(60, intervalInput));
+        setTimeInterval(clamped);
+    };
+
     const filteredData = updatedData.filter(
         (item) => item.timestamp >= sliderValues[0] && item.timestamp <= sliderValues[1]
     );
 
-    const handleSliderChange = (values) => {
-        setSliderValues(values);
+    const aggregateData = (data, intervalMinutes) => {
+        if (!data.length) return [];
+
+        const result = [];
+        let groupStart = data[0].timestamp;
+        let tempGroup = [];
+
+        for (const item of data) {
+            if (item.timestamp - groupStart < intervalMinutes * 60 * 1000) {
+                tempGroup.push(item);
+            } else {
+                result.push({
+                    timestamp: groupStart,
+                    'Time Step': tempGroup[0]['Time Step'],
+                    'Energy Production from PV-kWh': tempGroup.reduce((sum, i) => sum + Number(i['Energy Production from PV-kWh']), 0),
+                    'Energy Production from EV-kWh': tempGroup.reduce((sum, i) => sum + Number(i['Energy Production from EV-kWh']), 0),
+                });
+                groupStart = item.timestamp;
+                tempGroup = [item];
+            }
+        }
+
+        if (tempGroup.length > 0) {
+            result.push({
+                timestamp: groupStart,
+                'Time Step': tempGroup[0]['Time Step'],
+                'Energy Production from PV-kWh': tempGroup.reduce((sum, i) => sum + Number(i['Energy Production from PV-kWh']), 0),
+                'Energy Production from EV-kWh': tempGroup.reduce((sum, i) => sum + Number(i['Energy Production from EV-kWh']), 0),
+            });
+        }
+
+        return result;
     };
 
-    const formatXAxis = (tick) => {
-        return tick.slice(0, 10);
+    const aggregatedData = aggregateData(filteredData, timeInterval);
+
+    const getMidnightTicks = (data, intervalMinutes) => {
+        if (!data.length) return [];
+        const seen = new Set();
+        const ticks = [];
+    
+        for (const item of data) {
+            const d = new Date(item.timestamp);
+            const isNearMidnight = d.getUTCHours() === 0 && d.getUTCMinutes() < intervalMinutes;
+    
+            if (isNearMidnight) {
+                const midnightUTC = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
+                
+                // Get the tick, and store it if it hasn't been added before
+                const tick = midnightUTC.toISOString().slice(0,19); // Converts to ISO format string
+                if (!seen.has(tick)) {
+                    seen.add(tick);
+                    ticks.push(tick);
+                }
+            }
+        }
+    
+        return ticks;
     };
 
-    const totalDays = Math.floor(filteredData.length / 24);
-    const tickCount = Math.min(totalDays, 10);
+    const xAxisTicks = getMidnightTicks(aggregatedData, timeInterval);
 
-    const interval = tickCount < 10 ? (Math.floor(totalDays / tickCount) * 24) : Math.floor(filteredData.length / 10);
     return (
         <>
-            <h5>{title}</h5>
-            <ResponsiveContainer width={"100%"} height={300}>
-                <ComposedChart data={filteredData} stackOffset="sign">
+            <div className='d-flex justify-content-between'>
+                <h5>{title}</h5>
+
+                <div style={{ marginBottom: "1rem" }}>
+                    <label>
+                        <span title={`Base interval from data: ${baseIntervalMinutes} minute(s)`}>
+                            Interval (minutes):
+                        </span>
+                        <input
+                            type="number"
+                            min={baseIntervalMinutes}
+                            max={60}
+                            value={intervalInput}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setIntervalInput(Number.isNaN(val) ? baseIntervalMinutes : val);
+                            }}
+                            style={{ width: "80px", marginRight: "10px", marginLeft: "5px" }}
+                        />
+                    </label>
+                    <Button
+                        className="p-2"
+                        variant="secondary"
+                        onClick={handleApplyInterval}
+                        disabled={
+                            intervalInput < baseIntervalMinutes ||
+                            intervalInput > 60 ||
+                            intervalInput === timeInterval
+                        }
+                    >
+                        Apply
+                    </Button>
+                </div>
+            </div>
+
+            <ResponsiveContainer width="100%" height={300}>
+                <ComposedChart data={aggregatedData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                         dataKey="Time Step"
-                        angle='-8'
-                        interval={interval} tickFormatter={(tick, index) => formatXAxis(tick)}
+                        ticks={xAxisTicks}
+                        tickFormatter={(tick) => tick.slice(0, 10)}
+                        angle={-8}
                     />
-                    <YAxis
-                        label={{ value: "kWh", angle: -90, position: "insideLeft" }}
-                    />
+                    <YAxis label={{ value: "kWh", angle: -90, position: "insideLeft" }} />
                     <Tooltip
                         labelFormatter={(label) => {
                             const date = new Date(label);
@@ -60,7 +187,8 @@ function CardProduction({ data, title }) {
                                 hour12: false,
                             });
                         }}
-                        formatter={(value, name) => [`${value} kWh`, `${name}`]} />
+                        formatter={(value, name) => [`${value.toFixed(3)} kWh`, name]}
+                    />
                     <Legend />
                     <Bar dataKey="Energy Production from PV-kWh" stackId="a" fill="#8884d8" />
                     <Bar dataKey="Energy Production From EV-kWh" stackId="a" fill="#82ca9d" />

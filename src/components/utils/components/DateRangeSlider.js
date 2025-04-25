@@ -6,6 +6,8 @@ import dayjs from "dayjs";
 const DateRangeSlider = ({ minTimestamp, maxTimestamp, sliderValues, onSliderChange }) => {
   const formatDate = (timestamp) => dayjs(timestamp).format("YYYY-MM-DD");
 
+  const step = 24 * 60 * 60 * 1000; // Step = 1 day
+
   return (
     <div className="p-6 w-600px mx-auto">
       <div className="d-flex justify-content-between mb-2">
@@ -19,7 +21,7 @@ const DateRangeSlider = ({ minTimestamp, maxTimestamp, sliderValues, onSliderCha
         max={maxTimestamp}
         value={sliderValues}
         onChange={onSliderChange}
-        step={24 * 60 * 60 * 1000} // Step = 1 day
+        step={step}
       />
     </div>
   );

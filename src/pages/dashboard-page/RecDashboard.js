@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Container, Tab, Tabs, Row, Col, Card, CardBody, Button, ListGroup, Collapse } from "react-bootstrap";
-import { FaIndustry, FaPlug, FaBolt, FaBuilding, FaBatteryFull } from "react-icons/fa";
+import { FaIndustry, FaPlug, FaBolt, FaBuilding, FaBatteryFull, FaUpload, FaMoneyBill } from "react-icons/fa";
 import SelectSimulationModal from "../../components/shared/SelectSimulationModal";
 import CardEV from "../../components/utils/equipment/CardEV.js";
 import CardPV from "../../components/utils/equipment/CardPV.js";
@@ -10,10 +10,16 @@ import CardConsumption from "components/utils/building/CardConsumption";
 import CardCharger from "components/utils/equipment/CardCharger";
 import CardBattery from "components/utils/equipment/CardBattery";
 import { useEffect } from "react";
+import CardPricing from "components/utils/equipment/CardPricing";
 
 function RecDashboard() {
   const [show, setShow] = useState(false);
   const [selectedSimulations, setSelectedSimulations] = useState([]);
+
+  const fileInputRef = useRef(null);
+  const handleUploadClick = () => {
+    fileInputRef.current.click();
+  };
 
   const [selectedSimulationGraph, setSelectedSimulationGraph] = useState({});
   const [selectedSimulationEquipment, setSelectedSimulationEquipment] = useState({});
@@ -129,13 +135,26 @@ function RecDashboard() {
     <Container fluid>
       <Row>
         <Col>
+          {/* Hidden File Input */}
           <input
             type="file"
             webkitdirectory="true"
             multiple
             onChange={handleFolderUpload}
+            ref={fileInputRef}
+            style={{ display: "none" }}
           />
+
+          <Button
+            className="d-flex align-items-center"
+            variant="secondary"
+            onClick={handleUploadClick}
+          >
+            <FaUpload style={{ marginRight: "10px" }} />
+            Upload Simulations
+          </Button>
         </Col>
+
         {simulationFolders.length > 0 && (
           <Col className="d-flex flex-row-reverse">
             <Button variant="primary" onClick={handleOpen}>Select Simulations</Button>
@@ -150,7 +169,7 @@ function RecDashboard() {
 
       {/* Load tabs only if there are selected simulations */}
       {selectedSimulations.length > 0 && (
-        <Tabs defaultActiveKey={selectedSimulations.sort()[0]} id="simulation-tabs" className="mb-3">
+        <Tabs defaultActiveKey={selectedSimulations.sort()[0]} id="simulation-tabs" className="mt-3 mb-3">
           {selectedSimulations.sort().map((simulation, index) => (
             <Tab eventKey={simulation} title={simulation} key={index}>
               <Row>
@@ -193,6 +212,9 @@ function RecDashboard() {
                         {selectedSimulationEquipment[simulation].title.includes("Pv") && (
                           <CardPV data={selectedSimulationEquipment[simulation].data} title={selectedSimulationEquipment[simulation].title} />
                         )}
+                        {selectedSimulationEquipment[simulation].title.includes("Pricing") && (
+                          <CardPricing data={selectedSimulationEquipment[simulation].data} title={selectedSimulationEquipment[simulation].title} />
+                        )}
                       </CardBody>
                     </Card>
                   )}
@@ -210,6 +232,7 @@ function RecDashboard() {
 const DynamicTreeList = ({ folderData, setSelectedGraph, setSelectedEquipment }) => {
   const [openBuildings, setOpenBuildings] = useState({});
   const [openEVs, setOpenEVs] = useState(false);
+  const [openPricing, setOpenPricing] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
   const toggleSection = (id) => {
@@ -218,6 +241,10 @@ const DynamicTreeList = ({ folderData, setSelectedGraph, setSelectedEquipment })
 
   const toggleEVsSection = () => {
     setOpenEVs((prev) => !prev);
+  };
+
+  const togglePricingSection = () => {
+    setOpenPricing((prev) => !prev);
   };
 
   const handleProductionClick = (building) => {
@@ -247,6 +274,11 @@ const DynamicTreeList = ({ folderData, setSelectedGraph, setSelectedEquipment })
     setSelectedEquipment({ title: `${formatLabel(equipment)} Data`, data: folderData[equipment] });
   };
 
+  const handlePricingClick = (data) => {
+    setSelectedItem(`pricing_info`);
+    setSelectedEquipment({ title: `Pricing Info`, data: data });
+  };
+
   const formatLabel = (label) =>
     label.replace(/_/g, " ").replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
 
@@ -274,9 +306,9 @@ const DynamicTreeList = ({ folderData, setSelectedGraph, setSelectedEquipment })
       if (!buildingGroups[normalizedKey]) {
         buildingGroups[normalizedKey] = { hasData: true, chargers: [], batteries: [] };
       }
-    } else if (isEV) {
-      evsGroup.push(key);
     }
+
+    if (isEV) evsGroup.push(key);
   });
 
   // --- Sorting buildings normally ---
@@ -364,6 +396,29 @@ const DynamicTreeList = ({ folderData, setSelectedGraph, setSelectedEquipment })
                   {formatLabel(ev)}
                 </ListGroup.Item>
               ))}
+            </div>
+          </Collapse>
+        </React.Fragment>
+      )}
+
+      {/* Pricing Section */}
+      {folderData["pricing"] && folderData["pricing"].length > 0 && (
+        <React.Fragment>
+          <ListGroup.Item
+            className="d-flex align-items-center"
+            style={{ fontWeight: "bold", backgroundColor: "#e9ecef" }}
+            action onClick={togglePricingSection}
+            aria-expanded={openPricing}>
+            <FaMoneyBill style={{ marginRight: "8px" }} />
+            Pricing
+          </ListGroup.Item>
+          <Collapse in={openPricing}>
+            <div style={{ marginLeft: "1rem" }}>
+              <ListGroup.Item key={"pricing"} action onClick={() => handlePricingClick(folderData["pricing"])}
+                active={selectedItem === `pricing_info`}>
+                <FaMoneyBill style={{ marginRight: "8px" }} />
+                Pricing Data
+              </ListGroup.Item>
             </div>
           </Collapse>
         </React.Fragment>
