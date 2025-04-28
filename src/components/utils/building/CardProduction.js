@@ -130,7 +130,7 @@ function CardProduction({ data, title }) {
 
     return (
         <>
-            <div className='d-flex justify-content-between'>
+            <div className='d-flex justify-content-between align-items-center'>
                 <h5>{title}</h5>
 
                 <div style={{ marginBottom: "1rem" }}>
@@ -156,8 +156,7 @@ function CardProduction({ data, title }) {
                         onClick={handleApplyInterval}
                         disabled={
                             intervalInput < baseIntervalMinutes ||
-                            intervalInput > 60 ||
-                            intervalInput === timeInterval
+                            intervalInput > 60
                         }
                     >
                         Apply
@@ -166,7 +165,7 @@ function CardProduction({ data, title }) {
             </div>
 
             <ResponsiveContainer width="100%" height={300}>
-                <ComposedChart data={aggregatedData}>
+                <ComposedChart data={aggregatedData} stackOffset="sign">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                         dataKey="Time Step"

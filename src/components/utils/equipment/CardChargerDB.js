@@ -10,7 +10,7 @@ import DateRangeSlider from "../components/DateRangeSlider";
 const floorToMidnightUTC = (timestamp) => {
     const date = new Date(timestamp);
 
-    if(date.getHours() != 0 || date.getMinutes() != 0 || date.getSeconds() != 0) {
+    if (date.getHours() != 0 || date.getMinutes() != 0 || date.getSeconds() != 0) {
         date.setUTCHours(0, 0, 0, 0);
     }
 
@@ -20,25 +20,23 @@ const floorToMidnightUTC = (timestamp) => {
 const ceilToEndOfDayUTC = (timestamp) => {
     const date = new Date(timestamp);
 
-    if(date.getHours() != 23 || date.getMinutes() != 59 || date.getSeconds() != 59) {
+    if (date.getHours() != 23 || date.getMinutes() != 59 || date.getSeconds() != 59) {
         date.setUTCHours(23, 59, 59, 999);
     }
 
     return date.getTime();
 };
 
-function CardCharger({ data, title }) {
+function CardChargerDB({ data, title }) {
     const updatedData = data.map((item) => ({
         ...item,
-        timestamp: new Date(item['Time Step']).getTime(),
-        'Charger Consumption-kWh': item['Charger Consumption-kWh'] === "-1.00" ? null : parseFloat(item['Charger Consumption-kWh']),
-        'Charger Production-kWh': item['Charger Production-kWh'] === "-1.00" ? null : parseFloat(item['Charger Production-kWh']),
-        'EV Estimated SOC Arrival-%': (item['EV Estimated SOC Arrival-%'] === "-1.00" || item['EV Estimated SOC Arrival-%'] === "-0.1")
-            ? null : parseFloat(item['EV Estimated SOC Arrival-%']) * 100,
-        'EV Required SOC Departure-%': (item['EV Required SOC Departure-%'] === "-1.00" || item['EV Required SOC Departure-%'] === "-0.1")
-            ? null : parseFloat(item['EV Required SOC Departure-%']) * 100,
-        'EV SOC-%': (item['EV SOC-%'] === "-1.00" || item['EV SOC-%'] === "-0.1")
-            ? null : parseFloat(item['EV SOC-%']) * 100
+        timestamp: new Date(item['timestamp']).getTime(),
+        'EsocA': (item['EsocA'] === "-1.00" || item['EsocA'] === -0.1)
+            ? null : item['EsocA'] * 100,
+        'EsocD': (item['EsocD'] === "-1.00" || item['EsocD'] === -0.1)
+            ? null : item['EsocD'] * 100,
+        'soc': (item['soc'] === "-1.00" || item['soc'] === -0.1)
+            ? null : item['soc'] * 100
     }));
 
     const minTimestamp = floorToMidnightUTC(updatedData[0]?.timestamp || 0);
@@ -92,17 +90,9 @@ function CardCharger({ data, title }) {
     };
 
     const aggregateGroup = (timestamp, group) => {
-        const sumKeys = ['Charger Consumption-kWh', 'Charger Production-kWh'];
-        const avgKeys = ['EV Estimated SOC Arrival-%', 'EV Required SOC Departure-%', 'EV SOC-%'];
+        const avgKeys = ['EsocA', 'EsocD', 'soc'];
 
-        const aggregated = { timestamp, 'Time Step': group[0]['Time Step'] };
-
-        sumKeys.forEach(key => {
-            const values = group.map(item => item[key]).filter(val => val !== null);
-            aggregated[key] = values.length > 0
-                ? values.reduce((sum, v) => sum + v, 0)
-                : null;
-        });
+        const aggregated = { timestamp, 'Time Step': group[0]['timestamp'] };
 
         avgKeys.forEach(key => {
             const values = group.map(item => item[key]).filter(val => val !== null);
@@ -126,44 +116,24 @@ function CardCharger({ data, title }) {
             if (isNearMidnight) {
                 const midnightUTC = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
                 const tick = midnightUTC.toISOString().slice(0, 19);
+                
                 if (!seen.has(tick)) {
                     seen.add(tick);
                     ticks.push(tick);
                 }
             }
         }
-
+        console.log(ticks)
         return ticks;
     };
 
     const aggregatedData = aggregateData(filteredData, timeInterval);
     const xAxisTicks = getMidnightTicks(aggregatedData, timeInterval);
 
-    const departureMarkers = filteredData
-        .filter(item => item['EV Departure Time'] === "0")
-        .map(item => ({
-            timestep: item['Time Step'],
-            EVName: item['EV Name']
-        }));
-
-    const arrivalMarkers = filteredData
-        .filter(item => item['EV Arrival Time'] === "0")
-        .map(item => ({
-            timestep: item['Time Step'],
-            EVName: item['EV Name']
-        }));
-
-    const formatEVName = (name) => {
-        if (!name) return "Unknown EV";
-        return name.replace("Electric_Vehicle_", "EV");
-    };
-
     const [visibleSeries, setVisibleSeries] = useState({
-        'Charger Consumption-kWh': true,
-        'Charger Production-kWh': true,
-        'EV Estimated SOC Arrival-%': true,
-        'EV Required SOC Departure-%': true,
-        'EV SOC-%': true
+        'EsocA': true,
+        'EsocD': true,
+        'soc': true
     });
 
     const handleCheckboxChange = (seriesKey) => {
@@ -229,9 +199,12 @@ function CardCharger({ data, title }) {
                 <ComposedChart data={aggregatedData} stackOffset="sign">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
-                        dataKey="Time Step"
+                        dataKey="timestamp"
                         ticks={xAxisTicks}
-                        tickFormatter={(tick) => tick.slice(0, 10)}
+                        tickFormatter={(tick) => {
+                            const date = new Date(tick);
+                            return date.toISOString().slice(0, 10);
+                        }}
                         angle={-8}
                     />
                     <YAxis label={{ value: 'kWh', angle: -90, position: 'insideLeft' }} />
@@ -253,28 +226,9 @@ function CardCharger({ data, title }) {
                                 hour12: false,
                             });
 
-                            // Find matching arrival and departure EVs
-                            const arrivedEVs = arrivalMarkers
-                                .filter(marker => marker.timestep === label)
-                                .map(marker => formatEVName(marker.EVName));
-
-                            const departedEVs = departureMarkers
-                                .filter(marker => marker.timestep === label)
-                                .map(marker => formatEVName(marker.EVName));
-
-                            // Create message if an EV arrives or departs
-                            let evMessage = "";
-                            if (arrivedEVs.length > 0) {
-                                evMessage += `${arrivedEVs.join(", ")} Arrived`;
-                            }
-                            if (departedEVs.length > 0) {
-                                evMessage += `${departedEVs.join(", ")} Departed`;
-                            }
-
                             return (
                                 <>
                                     <span>{formattedDate}</span>
-                                    {evMessage && <span style={{ fontWeight: "bold", marginTop: "4px" }}><br/>{evMessage}</span>}
                                 </>
                             );
                         }}
@@ -282,41 +236,15 @@ function CardCharger({ data, title }) {
                     />
                     <Legend />
 
-                    {visibleSeries['Charger Consumption-kWh'] && (
-                        <Bar dataKey="Charger Consumption-kWh" stackId="a" fill="#8884d8" barSize={10} />
+                    {visibleSeries['EsocA'] && (
+                        <Line yAxisId="right" type="monotone" dataKey="EsocA" stroke="#0088FE" />
                     )}
-                    {visibleSeries['Charger Production-kWh'] && (
-                        <Bar dataKey="Charger Production-kWh" stackId="a" fill="#82ca9d" />
+                    {visibleSeries['EsocD'] && (
+                        <Line yAxisId="right" type="monotone" dataKey="EsocD" stroke="#FF7300" />
                     )}
-                    {visibleSeries['EV Estimated SOC Arrival-%'] && (
-                        <Line yAxisId="right" type="monotone" dataKey="EV Estimated SOC Arrival-%" stroke="#0088FE" />
+                    {visibleSeries['soc'] && (
+                        <Line yAxisId="right" type="monotone" dataKey="soc" stroke="#112424" />
                     )}
-                    {visibleSeries['EV Required SOC Departure-%'] && (
-                        <Line yAxisId="right" type="monotone" dataKey="EV Required SOC Departure-%" stroke="#FF7300" />
-                    )}
-                    {visibleSeries['EV SOC-%'] && (
-                        <Line yAxisId="right" type="monotone" dataKey="EV SOC-%" stroke="#112424" />
-                    )}
-
-                    {departureMarkers.map((marker, idx) => (
-                        <ReferenceLine
-                            key={"departure_" + idx}
-                            x={marker.timestep}
-                            stroke="red"
-                            strokeDasharray="5 5"
-                            label={{ value: formatEVName(marker.EVName), fill: "red", fontSize: 12, fontWeight: "bold" }}
-                        />
-                    ))}
-
-                    {arrivalMarkers.map((marker, idx) => (
-                        <ReferenceLine
-                            key={"arrival_" + idx}
-                            x={marker.timestep}
-                            stroke="blue"
-                            strokeDasharray="5 5"
-                            label={{ value: formatEVName(marker.EVName), fill: "blue", fontSize: 12, fontWeight: "bold" }}
-                        />
-                    ))}
                 </ComposedChart>
             </ResponsiveContainer>
 
@@ -330,4 +258,4 @@ function CardCharger({ data, title }) {
     );
 }
 
-export default CardCharger;
+export default CardChargerDB;

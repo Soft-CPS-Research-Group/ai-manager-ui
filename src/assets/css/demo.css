@@ -815,3 +815,8 @@
   display: block;
   width: 100%;
 }
+
+/* Additional custom CSS */
+button.btn-secondary:disabled {
+  color: #6c757d;
+}

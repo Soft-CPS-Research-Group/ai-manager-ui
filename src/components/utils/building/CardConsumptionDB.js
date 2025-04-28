@@ -126,7 +126,7 @@ function CardConsumptionDB({ data, title }) {
 
     return (
         <>
-            <div className='d-flex justify-content-between'>
+            <div className='d-flex justify-content-between align-items-center'>
                 <h5>{title}</h5>
 
                 <div style={{ marginBottom: "1rem" }}>
@@ -155,7 +155,7 @@ function CardConsumptionDB({ data, title }) {
             </div>
 
             <ResponsiveContainer width="100%" height={300}>
-                <ComposedChart data={aggregatedData}>
+                <ComposedChart data={aggregatedData} stackOffset="sign">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                         dataKey="Time Step"

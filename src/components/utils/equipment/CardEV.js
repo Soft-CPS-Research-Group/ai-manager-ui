@@ -1,35 +1,128 @@
 import React, { useState } from 'react';
-import { ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+    ComposedChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer
+} from 'recharts';
 import DateRangeSlider from "../components/DateRangeSlider";
-import { Row, Col } from "react-bootstrap";
+import { Row, Col, Button } from "react-bootstrap";
 
 function CardEV({ data, title }) {
     const updatedData = data.map((item) => ({
         ...item,
-        timestamp: new Date(`${item['Time Step']}`).getTime(), // Convert time step to timestamp
-        // Replace -1 values with null for proper rendering
-        'electric_vehicle_estimated_soc_arrival': item['electric_vehicle_estimated_soc_arrival'] === "-0.1" ? null : item['electric_vehicle_estimated_soc_arrival'],
-        'electric_vehicle_required_soc_departure': item['electric_vehicle_required_soc_departure'] === "-0.1" ? null : item['electric_vehicle_required_soc_departure'],
-        'electric_vehicle_soc': item['electric_vehicle_soc'] === "-1.0" ? null : item['electric_vehicle_soc'],
+        timestamp: new Date(`${item['Time Step']}`).getTime(),
+        'electric_vehicle_estimated_soc_arrival': item['electric_vehicle_estimated_soc_arrival'] === "-0.1" ? null : Number(item['electric_vehicle_estimated_soc_arrival']),
+        'electric_vehicle_required_soc_departure': item['electric_vehicle_required_soc_departure'] === "-0.1" ? null : Number(item['electric_vehicle_required_soc_departure']),
+        'electric_vehicle_soc': item['electric_vehicle_soc'] === "-1.0" ? null : Number(item['electric_vehicle_soc']),
     }));
 
-    // Definir limites da data inicial e final com base nos dados do gráfico
     const minTimestamp = updatedData[0]?.timestamp || 0;
     const maxTimestamp = updatedData[updatedData.length - 1]?.timestamp || 0;
 
-    //Valor inicial do filtro - para não carregar muitos dados de uma vez
-    const filterTimestamp = updatedData[240]?.timestamp || 0;
+    const baseIntervalMinutes = updatedData.length > 1
+        ? Math.round((updatedData[1].timestamp - updatedData[0].timestamp) / (60 * 1000))
+        : 1;
 
-    const [sliderValues, setSliderValues] = useState([minTimestamp, filterTimestamp]);
+    const pointsPerDay = Math.floor((24 * 60) / baseIntervalMinutes);
+    const defaultDataPoints = pointsPerDay * 10;
+    const defaultFilterEnd = updatedData[defaultDataPoints]?.timestamp || maxTimestamp;
+    const [sliderValues, setSliderValues] = useState([minTimestamp, defaultFilterEnd]);
 
-    //Filtragem com base nas datas
-    const filteredData = updatedData.filter(
-        (item) => item.timestamp >= sliderValues[0] && item.timestamp <= sliderValues[1]
-    );
+    const [timeInterval, setTimeInterval] = useState(baseIntervalMinutes);
+    const [intervalInput, setIntervalInput] = useState(baseIntervalMinutes);
 
     const handleSliderChange = (values) => {
         setSliderValues(values);
     };
+
+    const handleApplyInterval = () => {
+        const clamped = Math.max(baseIntervalMinutes, Math.min(60, intervalInput));
+        setTimeInterval(clamped);
+    };
+
+    const filteredData = updatedData.filter(
+        (item) => item.timestamp >= sliderValues[0] && item.timestamp <= sliderValues[1]
+    );
+
+    const aggregateEVData = (data, intervalMinutes) => {
+        if (!data.length) return [];
+
+        const result = [];
+        let groupStart = data[0].timestamp;
+        let tempGroup = [];
+
+        for (const item of data) {
+            if (item.timestamp - groupStart < intervalMinutes * 60 * 1000) {
+                tempGroup.push(item);
+            } else {
+                const avg = (key) =>
+                    tempGroup.filter(i => i[key] !== null && i[key] !== undefined).length
+                        ? tempGroup.reduce((sum, i) => sum + Number(i[key] || 0), 0) /
+                          tempGroup.filter(i => i[key] !== null && i[key] !== undefined).length
+                        : null;
+
+                result.push({
+                    timestamp: groupStart,
+                    'Time Step': tempGroup[0]['Time Step'],
+                    'electric_vehicle_estimated_soc_arrival': avg('electric_vehicle_estimated_soc_arrival'),
+                    'electric_vehicle_required_soc_departure': avg('electric_vehicle_required_soc_departure'),
+                    'electric_vehicle_soc': avg('electric_vehicle_soc'),
+                });
+
+                groupStart = item.timestamp;
+                tempGroup = [item];
+            }
+        }
+
+        if (tempGroup.length > 0) {
+            const avg = (key) =>
+                tempGroup.filter(i => i[key] !== null && i[key] !== undefined).length
+                    ? tempGroup.reduce((sum, i) => sum + Number(i[key] || 0), 0) /
+                      tempGroup.filter(i => i[key] !== null && i[key] !== undefined).length
+                    : null;
+
+            result.push({
+                timestamp: groupStart,
+                'Time Step': tempGroup[0]['Time Step'],
+                'electric_vehicle_estimated_soc_arrival': avg('electric_vehicle_estimated_soc_arrival'),
+                'electric_vehicle_required_soc_departure': avg('electric_vehicle_required_soc_departure'),
+                'electric_vehicle_soc': avg('electric_vehicle_soc'),
+            });
+        }
+
+        return result;
+    };
+
+    const aggregatedData = aggregateEVData(filteredData, timeInterval);
+
+    const getMidnightTicks = (data, intervalMinutes) => {
+        if (!data.length) return [];
+        const seen = new Set();
+        const ticks = [];
+
+        for (const item of data) {
+            const d = new Date(item.timestamp);
+            const isNearMidnight = d.getUTCHours() === 0 && d.getUTCMinutes() < intervalMinutes;
+
+            if (isNearMidnight) {
+                const midnightUTC = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
+                const tick = midnightUTC.toISOString().slice(0, 19);
+                if (!seen.has(tick)) {
+                    seen.add(tick);
+                    ticks.push(tick);
+                }
+            }
+        }
+
+        return ticks;
+    };
+
+    const xAxisTicks = getMidnightTicks(aggregatedData, timeInterval);
 
     const [visibleSeries, setVisibleSeries] = useState({
         'electric_vehicle_estimated_soc_arrival': true,
@@ -44,32 +137,51 @@ function CardEV({ data, title }) {
         }));
     };
 
-    const formatXAxis = (tick) => {
-        return tick.slice(0, 10);
-    };
-
-    const totalDays = Math.floor(filteredData.length / 24); //ISTO VAI MUDAR COM O INTERVALO
-    const tickCount = Math.min(totalDays, 10);
-
-    const interval = tickCount < 10 ? (Math.floor(totalDays / tickCount) * 24) : Math.floor(filteredData.length / 10);
-
-    const formatYAxis = (tick) => {
-        return tick * 100;
-    };
+    const formatYAxis = (tick) => tick * 100;
 
     return (
         <>
-            <div className='d-flex justify-content-between'>
-                <h5>{title}</h5>
-                <h5>Interval: 1 hour</h5>
+            <div className='d-flex justify-content-between align-items-center'>
+                <div>
+                    <h5>{title}</h5>
+                </div>
+                <div>
+                    <label>
+                        <span title={`Base interval from data: ${baseIntervalMinutes} minute(s)`}>
+                            Interval (minutes):
+                        </span>
+                        <input
+                            type="number"
+                            min={baseIntervalMinutes}
+                            max={60}
+                            value={intervalInput}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setIntervalInput(Number.isNaN(val) ? baseIntervalMinutes : val);
+                            }}
+                            style={{ width: "80px", marginLeft: "5px", marginRight: "10px" }}
+                        />
+                    </label>
+                    <Button
+                        className="p-2"
+                        variant="secondary"
+                        onClick={handleApplyInterval}
+                        disabled={
+                            intervalInput < baseIntervalMinutes ||
+                            intervalInput > 60 ||
+                            intervalInput === timeInterval
+                        }
+                    >
+                        Apply
+                    </Button>
+                </div>
             </div>
 
             <div style={{ marginBottom: '10px' }}>
-                {/* Array of series keys and labels */}
                 <Row>
                     {Object.keys(visibleSeries).map((key) => (
                         <Col key={key}>
-                            <label key={key} className='d-flex align-items-center'>
+                            <label className='d-flex align-items-center'>
                                 <input
                                     type="checkbox"
                                     checked={visibleSeries[key]}
@@ -80,21 +192,22 @@ function CardEV({ data, title }) {
                         </Col>
                     ))}
                 </Row>
-
             </div>
 
-            <ResponsiveContainer width={"100%"} height={300}>
-                <ComposedChart data={filteredData}>
+            <ResponsiveContainer width="100%" height={300}>
+                <ComposedChart data={aggregatedData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                         dataKey="Time Step"
-                        angle='-8'
-                        interval={interval} tickFormatter={(tick, index) => formatXAxis(tick)}
+                        ticks={xAxisTicks}
+                        angle={-8}
+                        tickFormatter={(tick) => tick.slice(0, 10)}
                     />
                     <YAxis
-                        tickFormatter={(tick, index) => formatYAxis(tick)}
+                        tickFormatter={formatYAxis}
                         label={{ value: '%', angle: -90, position: 'insideLeft' }}
-                        domain={[0, 1]} />
+                        domain={[0, 1]}
+                    />
                     <Tooltip
                         labelFormatter={(label) => {
                             const date = new Date(label);
@@ -107,7 +220,8 @@ function CardEV({ data, title }) {
                                 hour12: false,
                             });
                         }}
-                        formatter={(value, name) => [`${value * 100} %`, `${name}`]} />
+                        formatter={(value, name) => [`${(value * 100).toFixed(1)} %`, `${name}`]}
+                    />
                     <Legend />
                     {visibleSeries['electric_vehicle_estimated_soc_arrival'] && (
                         <Line type="monotone" dataKey="electric_vehicle_estimated_soc_arrival" stroke="#8884d8" />

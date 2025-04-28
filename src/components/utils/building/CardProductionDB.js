@@ -128,7 +128,7 @@ function CardProductionDB({ data, title }) {
 
     return (
         <>
-            <div className='d-flex justify-content-between'>
+            <div className='d-flex justify-content-between align-items-center'>
                 <h5>{title}</h5>
 
                 <div style={{ marginBottom: "1rem" }}>
@@ -157,7 +157,7 @@ function CardProductionDB({ data, title }) {
             </div>
 
             <ResponsiveContainer width="100%" height={300}>
-                <ComposedChart data={aggregatedData}>
+                <ComposedChart data={aggregatedData} stackOffset="sign">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                         dataKey="Time Step"
@@ -179,7 +179,10 @@ function CardProductionDB({ data, title }) {
                                 hour12: false,
                             });
                         }}
-                        formatter={(value, name) => [`${value.toFixed(3)} kWh`, name]}
+                        formatter={(value, name) => {
+                            const numericValue = typeof value === "number" && !isNaN(value) ? value.toFixed(3) : value;
+                            return [`${numericValue} kWh`, name];
+                        }}
                     />
                     <Legend />
                     <Bar dataKey="solar_generation" stackId="a" fill="#8884d8" />

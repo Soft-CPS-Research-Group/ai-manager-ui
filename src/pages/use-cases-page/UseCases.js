@@ -1,5 +1,6 @@
 import CardConsumptionDB from "components/utils/building/CardConsumptionDB";
 import CardProductionDB from "components/utils/building/CardProductionDB";
+import CardChargerDB from "components/utils/equipment/CardChargerDB";
 import React, { useState, useEffect } from "react";
 import {
   Container,
@@ -21,6 +22,7 @@ function UseCases() {
   const [livingLabData, setLivingLabData] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const [selectedHeadquartersGraph, setSelectedHeadquartersGraph] = useState({});
   const [selectedSimulationGraph, setSelectedSimulationGraph] = useState({});
   const [selectedGraph, setSelectedGraph] = useState(null);
 
@@ -72,10 +74,18 @@ function UseCases() {
 
                       <Col md={9}>
                         {/* Render selected graph */}
-                        {selectedSimulationGraph && selectedSimulationGraph.data && (
+                        {selectedHeadquartersGraph && selectedHeadquartersGraph.data && (
                           <Card>
                             <CardBody>
                               AAAAA
+                            </CardBody>
+                          </Card>
+                        )}
+
+                        {selectedGraph && selectedGraph.title?.startsWith("Charger") && (
+                          <Card>
+                            <CardBody>
+                              <CardChargerDB data={selectedGraph.data} title={selectedGraph.title} />
                             </CardBody>
                           </Card>
                         )}
@@ -175,6 +185,42 @@ const DynamicTreeList = ({ folderData, setSelectedGraph }) => {
   );
 };
 
+// Aggregated charger data by charger
+const aggregateChargerData = (headquartersData) => {
+  const chargerMap = {};
+
+  headquartersData.forEach((entry) => {
+    const { timestamp, charging_sessions } = entry;
+
+    if (!charging_sessions) return;
+
+    charging_sessions.forEach((session) => {
+      const chargerId = session["Charger Id"];
+      if (!chargerMap[chargerId]) {
+        chargerMap[chargerId] = [];
+      }
+
+      chargerMap[chargerId].push({
+        timestamp,
+        EAT: session.EAT ?? 0,
+        EOT: session.EOT ?? 0,
+        EsocA: session.EsocA ?? 0,
+        EsocD: session.EsocD ?? 0,
+        power: session.power ?? 0,
+        soc: session.soc ?? 0,
+      });
+    });
+  });
+
+  let x = Object.keys(chargerMap).map((chargerId) => ({
+    chargerId,
+    history: chargerMap[chargerId],
+  }));
+
+  console.log(x);
+  return x;
+};
+
 const IChargingTreeList = ({ data, setSelectedGraph }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -183,6 +229,8 @@ const IChargingTreeList = ({ data, setSelectedGraph }) => {
   if (!data || !data["i-charging headquarters"]) return null;
 
   const headquartersData = data["i-charging headquarters"];
+  const aggregatedChargers = aggregateChargerData(headquartersData);
+
   const firstEntry = headquartersData[0];
   const chargerList = firstEntry?.charging_sessions?.map(session => session["Charger Id"]) || [];
 
@@ -193,7 +241,13 @@ const IChargingTreeList = ({ data, setSelectedGraph }) => {
 
   const handleChargerClick = (chargerId) => {
     setSelectedItem(chargerId);
-    setSelectedGraph({ title: `Charger ${chargerId}`, data: headquartersData });
+
+    const chargerData = aggregatedChargers.find(c => c.chargerId === chargerId);
+
+    setSelectedGraph({
+      title: `Charger ${chargerId}`,
+      data: chargerData?.history || [],
+    });
   };
 
   return (
