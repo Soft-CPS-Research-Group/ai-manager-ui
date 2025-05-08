@@ -17,7 +17,7 @@ const floorToMidnightUTC = (timestamp) => {
     const date = new Date(timestamp);
 
     if(date.getHours() != 0 || date.getMinutes() != 0 || date.getSeconds() != 0) {
-        date.setUTCHours(0, 0, 0, 0);
+        date.setHours(0, 0, 0, 0);
     }
 
     return date.getTime();
@@ -27,7 +27,7 @@ const ceilToEndOfDayUTC = (timestamp) => {
     const date = new Date(timestamp);
 
     if(date.getHours() != 23 || date.getMinutes() != 59 || date.getSeconds() != 59) {
-        date.setUTCHours(23, 59, 59, 999);
+        date.setHours(23, 59, 59, 999);
     }
 
     return date.getTime();
@@ -36,7 +36,8 @@ const ceilToEndOfDayUTC = (timestamp) => {
 function CardConsumption({ data, title }) {
     const updatedData = data.map((item) => ({
         ...item,
-        timestamp: new Date(`${item['Time Step']}`).getTime(),
+        'Time Step': item['timestamp'],
+        timestamp: new Date(item['timestamp']).getTime()
     }));
 
     const minTimestamp = floorToMidnightUTC(updatedData[0]?.timestamp) || 0;

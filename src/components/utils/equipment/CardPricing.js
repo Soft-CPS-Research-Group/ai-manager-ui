@@ -29,7 +29,8 @@ const ceilToEndOfDayUTC = (timestamp) => {
 function CardPricing({ data, title }) {
     const updatedData = data.map((item) => ({
         ...item,
-        timestamp: new Date(item['Time Step']).getTime()
+        'Time Step': item['timestamp'],
+        timestamp: new Date(item['timestamp']).getTime()
     }));
 
     const minTimestamp = floorToMidnightUTC(updatedData[0]?.timestamp || 0);

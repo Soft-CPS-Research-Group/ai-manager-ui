@@ -15,7 +15,8 @@ import { Row, Col, Button } from "react-bootstrap";
 function CardEV({ data, title }) {
     const updatedData = data.map((item) => ({
         ...item,
-        timestamp: new Date(`${item['Time Step']}`).getTime(),
+        'Time Step': item['timestamp'],
+        timestamp: new Date(item['timestamp']).getTime(),
         'electric_vehicle_estimated_soc_arrival': item['electric_vehicle_estimated_soc_arrival'] === "-0.1" ? null : Number(item['electric_vehicle_estimated_soc_arrival']),
         'electric_vehicle_required_soc_departure': item['electric_vehicle_required_soc_departure'] === "-0.1" ? null : Number(item['electric_vehicle_required_soc_departure']),
         'electric_vehicle_soc': item['electric_vehicle_soc'] === "-1.0" ? null : Number(item['electric_vehicle_soc']),

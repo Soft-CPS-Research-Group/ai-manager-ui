@@ -120,6 +120,7 @@ function KPIs() {
         // Skip if already parsed
         if (parsedSimulations[simulation]) continue;
 
+        console.log(fileMapByFolder[simulation]?.['exported_kpis.csv'])
         const kpisFile = fileMapByFolder[simulation]?.['exported_kpis.csv'];
         if (kpisFile) {
           const text = await kpisFile.text();

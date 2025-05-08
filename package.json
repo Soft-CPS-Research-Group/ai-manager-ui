@@ -11,6 +11,7 @@
     "dayjs": "^1.11.13",
     "gulp": "4.0.2",
     "gulp-append-prepend": "1.0.9",
+    "http-proxy-middleware": "^3.0.5",
     "leaflet": "^1.9.4",
     "mapbox-gl": "^3.7.0",
     "mongoose": "^8.13.2",

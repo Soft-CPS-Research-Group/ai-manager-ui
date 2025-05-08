@@ -1,16 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
-    ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    ReferenceLine, Line
-} from 'recharts';
-import { Row, Col, Button } from "react-bootstrap";
+    ResponsiveContainer,
+    ComposedChart,
+    CartesianGrid,
+    XAxis,
+    YAxis,
+    Tooltip,
+    Legend,
+    Bar
+} from "recharts";
+import { Button } from "react-bootstrap";
 import DateRangeSlider from "../components/DateRangeSlider";
 
 // Helper functions to adjust timestamps to full days
 const floorToMidnightUTC = (timestamp) => {
     const date = new Date(timestamp);
 
-    if (date.getHours() != 0 || date.getMinutes() != 0 || date.getSeconds() != 0) {
+    if(date.getHours() != 0 || date.getMinutes() != 0 || date.getSeconds() != 0) {
         date.setUTCHours(0, 0, 0, 0);
     }
 
@@ -20,37 +26,32 @@ const floorToMidnightUTC = (timestamp) => {
 const ceilToEndOfDayUTC = (timestamp) => {
     const date = new Date(timestamp);
 
-    if (date.getHours() != 23 || date.getMinutes() != 59 || date.getSeconds() != 59) {
+    if(date.getHours() != 23 || date.getMinutes() != 59 || date.getSeconds() != 59) {
         date.setUTCHours(23, 59, 59, 999);
     }
 
     return date.getTime();
 };
 
-function CardChargerDB({ data, title }) {
+function CardConsumptionGeneric({ data, title }) {
     const updatedData = data.map((item) => ({
         ...item,
-        timestamp: new Date(item['timestamp']).getTime(),
-        'EsocA': (item['EsocA'] === "-1.00" || item['EsocA'] === -0.1)
-            ? null : item['EsocA'] * 100,
-        'EsocD': (item['EsocD'] === "-1.00" || item['EsocD'] === -0.1)
-            ? null : item['EsocD'] * 100,
-        'soc': (item['soc'] === "-1.00" || item['soc'] === -0.1)
-            ? null : item['soc'] * 100
+        timestamp: new Date(`${item['Time Step']}`).getTime(),
     }));
 
-    const minTimestamp = floorToMidnightUTC(updatedData[0]?.timestamp || 0);
-    const maxTimestamp = ceilToEndOfDayUTC(updatedData[updatedData.length - 1]?.timestamp || 0);
+    const minTimestamp = floorToMidnightUTC(updatedData[0]?.timestamp) || 0;
+    const maxTimestamp = ceilToEndOfDayUTC(updatedData[updatedData.length - 1]?.timestamp) || 0;
 
+    // Calculate base interval for an input
     const baseIntervalMinutes = updatedData.length > 1
         ? Math.round((updatedData[1].timestamp - updatedData[0].timestamp) / (60 * 1000))
         : 1;
 
     const pointsPerDay = Math.floor((24 * 60) / baseIntervalMinutes);
-    const defaultDataPoints = pointsPerDay * 10;
+    const defaultDataPoints = pointsPerDay * 10; // 10 days
     const defaultFilterEnd = ceilToEndOfDayUTC(updatedData[defaultDataPoints]?.timestamp || maxTimestamp);
-
     const [sliderValues, setSliderValues] = useState([minTimestamp, defaultFilterEnd]);
+
     const [timeInterval, setTimeInterval] = useState(baseIntervalMinutes);
     const [intervalInput, setIntervalInput] = useState(baseIntervalMinutes);
 
@@ -76,81 +77,64 @@ function CardChargerDB({ data, title }) {
             if (item.timestamp - groupStart < intervalMinutes * 60 * 1000) {
                 tempGroup.push(item);
             } else {
-                result.push(aggregateGroup(groupStart, tempGroup));
+                result.push({
+                    timestamp: groupStart,
+                    'Time Step': tempGroup[0]['Time Step'],
+                    'Non-shiftable Load-kWh': tempGroup.reduce((sum, i) => sum + Number(i['Non-shiftable Load-kWh']), 0),
+                    'Net Electricity Consumption-kWh': tempGroup.reduce((sum, i) => sum + Number(i['Net Electricity Consumption-kWh']), 0),
+                });
                 groupStart = item.timestamp;
                 tempGroup = [item];
             }
         }
 
         if (tempGroup.length > 0) {
-            result.push(aggregateGroup(groupStart, tempGroup));
+            result.push({
+                timestamp: groupStart,
+                'Time Step': tempGroup[0]['Time Step'],
+                'Non-shiftable Load-kWh': tempGroup.reduce((sum, i) => sum + Number(i['Non-shiftable Load-kWh']), 0),
+                'Net Electricity Consumption-kWh': tempGroup.reduce((sum, i) => sum + Number(i['Net Electricity Consumption-kWh']), 0),
+            });
         }
 
         return result;
     };
 
-    const aggregateGroup = (timestamp, group) => {
-        const avgKeys = ['EsocA', 'EsocD', 'soc'];
-
-        const aggregated = { timestamp, 'Time Step': group[0]['timestamp'] };
-
-        avgKeys.forEach(key => {
-            const values = group.map(item => item[key]).filter(val => val !== null);
-            aggregated[key] = values.length > 0
-                ? values.reduce((sum, v) => sum + v, 0) / values.length
-                : null;
-        });
-
-        return aggregated;
-    };
+    const aggregatedData = aggregateData(filteredData, timeInterval);
 
     const getMidnightTicks = (data, intervalMinutes) => {
         if (!data.length) return [];
         const seen = new Set();
         const ticks = [];
-
+    
         for (const item of data) {
             const d = new Date(item.timestamp);
             const isNearMidnight = d.getUTCHours() === 0 && d.getUTCMinutes() < intervalMinutes;
-
+    
             if (isNearMidnight) {
                 const midnightUTC = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
-                const tick = midnightUTC.toISOString().slice(0, 19);
                 
+                const tick = midnightUTC.toISOString().slice(0,19);
                 if (!seen.has(tick)) {
                     seen.add(tick);
                     ticks.push(tick);
                 }
             }
         }
-        console.log(ticks)
+    
         return ticks;
     };
 
-    const aggregatedData = aggregateData(filteredData, timeInterval);
     const xAxisTicks = getMidnightTicks(aggregatedData, timeInterval);
-
-    const [visibleSeries, setVisibleSeries] = useState({
-        'EsocA': true,
-        'EsocD': true,
-        'soc': true
-    });
-
-    const handleCheckboxChange = (seriesKey) => {
-        setVisibleSeries(prev => ({
-            ...prev,
-            [seriesKey]: !prev[seriesKey]
-        }));
-    };
 
     return (
         <>
-            <div className="d-flex justify-content-between align-items-center">
+            <div className='d-flex justify-content-between align-items-center'>
                 <h5>{title}</h5>
 
-                <div>
+                <div style={{ marginBottom: "1rem" }}>
                     <label>
-                        <span title={`Base interval: ${baseIntervalMinutes} minute(s)`}>
+                        <span title={`Base interval from data: ${baseIntervalMinutes} minute(s)`}>
                             Interval (minutes):
                         </span>
                         <input
@@ -162,17 +146,16 @@ function CardChargerDB({ data, title }) {
                                 const val = parseInt(e.target.value);
                                 setIntervalInput(Number.isNaN(val) ? baseIntervalMinutes : val);
                             }}
-                            style={{ width: "80px", margin: "0 10px" }}
+                            style={{ width: "80px", marginRight: "10px", marginLeft: "5px" }}
                         />
                     </label>
                     <Button
-                        variant="secondary"
                         className="p-2"
+                        variant="secondary"
                         onClick={handleApplyInterval}
                         disabled={
                             intervalInput < baseIntervalMinutes ||
-                            intervalInput > 60 ||
-                            intervalInput === timeInterval
+                            intervalInput > 60
                         }
                     >
                         Apply
@@ -180,44 +163,20 @@ function CardChargerDB({ data, title }) {
                 </div>
             </div>
 
-            <Row className="my-2">
-                {Object.keys(visibleSeries).map((key) => (
-                    <Col key={key} md={4}>
-                        <label className="d-flex align-items-center">
-                            <input
-                                type="checkbox"
-                                checked={visibleSeries[key]}
-                                onChange={() => handleCheckboxChange(key)}
-                            />
-                            <span className="ml-2">Show {key}</span>
-                        </label>
-                    </Col>
-                ))}
-            </Row>
-
             <ResponsiveContainer width="100%" height={300}>
                 <ComposedChart data={aggregatedData} stackOffset="sign">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
-                        dataKey="timestamp"
+                        dataKey="Time Step"
                         ticks={xAxisTicks}
-                        tickFormatter={(tick) => {
-                            const date = new Date(tick);
-                            return date.toISOString().slice(0, 10);
-                        }}
+                        tickFormatter={(tick) => tick.slice(0, 10)}
                         angle={-8}
                     />
-                    <YAxis label={{ value: 'kWh', angle: -90, position: 'insideLeft' }} />
-                    <YAxis
-                        yAxisId="right"
-                        orientation="right"
-                        label={{ value: 'SOC %', angle: -90, position: 'insideRight' }}
-                        domain={[0, 100]}
-                    />
+                    <YAxis label={{ value: "kWh", angle: -90, position: "insideLeft" }} />
                     <Tooltip
                         labelFormatter={(label) => {
                             const date = new Date(label);
-                            const formattedDate = date.toLocaleString("en-US", {
+                            return date.toLocaleString("en-US", {
                                 month: "short",
                                 day: "2-digit",
                                 year: "numeric",
@@ -225,26 +184,12 @@ function CardChargerDB({ data, title }) {
                                 minute: "2-digit",
                                 hour12: false,
                             });
-
-                            return (
-                                <>
-                                    <span>{formattedDate}</span>
-                                </>
-                            );
                         }}
-                        formatter={(value, name) => [`${value} %`, name]}
+                        formatter={(value, name) => [`${value.toFixed(3)} kWh`, name]}
                     />
                     <Legend />
-
-                    {visibleSeries['EsocA'] && (
-                        <Line yAxisId="right" type="monotone" dataKey="EsocA" stroke="#0088FE" />
-                    )}
-                    {visibleSeries['EsocD'] && (
-                        <Line yAxisId="right" type="monotone" dataKey="EsocD" stroke="#FF7300" />
-                    )}
-                    {visibleSeries['soc'] && (
-                        <Line yAxisId="right" type="monotone" dataKey="soc" stroke="#112424" />
-                    )}
+                    <Bar dataKey="Non-shiftable Load-kWh" stackId="a" fill="#8884d8" />
+                    <Bar dataKey="Net Electricity Consumption-kWh" stackId="a" fill="#82ca9d" />
                 </ComposedChart>
             </ResponsiveContainer>
 
@@ -258,4 +203,4 @@ function CardChargerDB({ data, title }) {
     );
 }
 
-export default CardChargerDB;
+export default CardConsumptionGeneric;

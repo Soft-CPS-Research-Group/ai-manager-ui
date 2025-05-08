@@ -30,7 +30,8 @@ const ceilToEndOfDayUTC = (timestamp) => {
 function CardCharger({ data, title }) {
     const updatedData = data.map((item) => ({
         ...item,
-        timestamp: new Date(item['Time Step']).getTime(),
+        'Time Step': item['timestamp'],
+        timestamp: new Date(item['timestamp']).getTime(),
         'Charger Consumption-kWh': item['Charger Consumption-kWh'] === "-1.00" ? null : parseFloat(item['Charger Consumption-kWh']),
         'Charger Production-kWh': item['Charger Production-kWh'] === "-1.00" ? null : parseFloat(item['Charger Production-kWh']),
         'EV Estimated SOC Arrival-%': (item['EV Estimated SOC Arrival-%'] === "-1.00" || item['EV Estimated SOC Arrival-%'] === "-0.1")

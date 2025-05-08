@@ -29,7 +29,8 @@ const ceilToEndOfDayUTC = (timestamp) => {
 function CardBattery({ data, title }) {
     const updatedData = data.map((item) => ({
         ...item,
-        timestamp: new Date(`${item['Time Step']}`).getTime(),
+        'Time Step': item['timestamp'],
+        timestamp: new Date(item['timestamp']).getTime(),
         'Battery Soc-%': (item['Battery Soc-%'] === "-1.00" || item['Battery Soc-%'] === "-0.1")
             ? null : parseFloat(item['Battery Soc-%']) * 100
     }));

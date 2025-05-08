@@ -17,7 +17,7 @@ const floorToMidnightUTC = (timestamp) => {
     const date = new Date(timestamp);
 
     if(date.getHours() != 0 || date.getMinutes() != 0 || date.getSeconds() != 0) {
-        date.setUTCHours(0, 0, 0, 0);
+        date.setHours(0, 0, 0, 0);
     }
 
     return date.getTime();
@@ -27,7 +27,7 @@ const ceilToEndOfDayUTC = (timestamp) => {
     const date = new Date(timestamp);
 
     if(date.getHours() != 23 || date.getMinutes() != 59 || date.getSeconds() != 59) {
-        date.setUTCHours(23, 59, 59, 999);
+        date.setHours(23, 59, 59, 999);
     }
 
     return date.getTime();
@@ -80,7 +80,7 @@ function CardProductionDB({ data, title }) {
             } else {
                 result.push({
                     timestamp: groupStart,
-                    'Time Step': new Date(groupStart).toISOString(),
+                    'Time Step': tempGroup[0]['Time Step'],
                     solar_generation: tempGroup.reduce((sum, i) => sum + i.solar_generation, 0)
                 });
                 groupStart = item.timestamp;
@@ -91,7 +91,7 @@ function CardProductionDB({ data, title }) {
         if (tempGroup.length > 0) {
             result.push({
                 timestamp: groupStart,
-                'Time Step': new Date(groupStart).toISOString(),
+                'Time Step': tempGroup[0]['Time Step'],
                 solar_generation: tempGroup.reduce((sum, i) => sum + i.solar_generation, 0)
             });
         }
@@ -109,8 +109,7 @@ function CardProductionDB({ data, title }) {
 
         for (const item of data) {
             const d = new Date(item.timestamp);
-            const isNearMidnight =
-                d.getUTCHours() === 0 && d.getUTCMinutes() < intervalMinutes;
+            const isNearMidnight = d.getHours() === 0 && d.getUTCMinutes() < intervalMinutes;
 
             if (isNearMidnight) {
                 const tick = item['Time Step'];
@@ -169,7 +168,6 @@ function CardProductionDB({ data, title }) {
                     <Tooltip
                         labelFormatter={(label) => {
                             const date = new Date(label);
-                            date.setHours(date.getHours() - 1);
                             return date.toLocaleString("en-US", {
                                 month: "short",
                                 day: "2-digit",

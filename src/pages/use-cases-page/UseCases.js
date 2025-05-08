@@ -30,12 +30,12 @@ function UseCases() {
     setLoading(true);
     try {
       if (tabKey === "0" && !ichargingData) {
-        const res = await fetch("http://localhost:5000/api/icharging-headquarters");
+        const res = await fetch("/real-time-data/i-charging_headquarters?minutes=8600");
         const json = await res.json();
         setIchargingData(json);
         console.log(json)
       } else if (tabKey === "1" && !livingLabData) {
-        const res = await fetch("http://localhost:5000/api/living-lab");
+        const res = await fetch("/real-time-data/living_lab?minutes=8600");
         const json = await res.json();
         setLivingLabData(json);
         console.log(json)

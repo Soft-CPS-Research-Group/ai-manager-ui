@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Container, Tab, Tabs, Row, Col, Card, CardBody, Button, ListGroup, Collapse } from "react-bootstrap";
+import { Container, Tab, Tabs, Row, Col, Card, CardBody, Button, ListGroup, Collapse, Form } from "react-bootstrap";
 import { FaIndustry, FaPlug, FaBolt, FaBuilding, FaBatteryFull, FaUpload, FaMoneyBill } from "react-icons/fa";
 import SelectSimulationModal from "../../components/shared/SelectSimulationModal";
 import CardEV from "../../components/utils/equipment/CardEV.js";
@@ -20,6 +20,8 @@ function RecDashboard() {
   const handleUploadClick = () => {
     fileInputRef.current.click();
   };
+
+  const [availableEpisodes, setAvailableEpisodes] = useState({});
 
   const [selectedSimulationGraph, setSelectedSimulationGraph] = useState({});
   const [selectedSimulationEquipment, setSelectedSimulationEquipment] = useState({});
@@ -79,17 +81,19 @@ function RecDashboard() {
 
     setParsedSimulations((prevParsed) => {
       const updatedParsed = { ...prevParsed };
+      const episodesBySim = {};
       let totalFiles = 0;
       let parsedFiles = 0;
 
       selectedSimulations.forEach((folderName) => {
-        // Skip if already parsed
         if (updatedParsed[folderName]) return;
 
         const fileMap = fileMapByFolder[folderName];
         if (!fileMap) return;
 
         updatedParsed[folderName] = {};
+        episodesBySim[folderName] = new Set();
+
         const dataFiles = Object.entries(fileMap).filter(
           ([fileName]) => !/kpi(s)?/i.test(fileName)
         );
@@ -101,6 +105,12 @@ function RecDashboard() {
             .replace("exported_data_", "")
             .replace(/\.[^/.]+$/, "");
 
+          // Extract episode name like `ep0`, `ep1`, etc.
+          const episodeMatch = cleanedFileName.match(/_?(ep\d+)/i);
+          if (episodeMatch) {
+            episodesBySim[folderName].add(episodeMatch[1]);
+          }
+
           Papa.parse(file, {
             header: true,
             skipEmptyLines: true,
@@ -109,15 +119,17 @@ function RecDashboard() {
               parsedFiles++;
 
               if (parsedFiles === totalFiles) {
-                console.log("✅ Updated parsed simulations:", updatedParsed);
-                // Final update once all are done
+                const episodesObj = {};
+                for (const sim in episodesBySim) {
+                  episodesObj[sim] = Array.from(episodesBySim[sim]).sort();
+                }
+                setAvailableEpisodes(episodesObj);
                 setParsedSimulations(updatedParsed);
               }
             },
             error: (error) => {
               console.error(`❌ Error parsing ${file.name}:`, error);
               parsedFiles++;
-
               if (parsedFiles === totalFiles) {
                 setParsedSimulations(updatedParsed);
               }
@@ -130,6 +142,25 @@ function RecDashboard() {
     });
   }, [selectedSimulations, fileMapByFolder]);
 
+
+  const [selectedEpisode, setSelectedEpisode] = useState({}); // per simulation
+
+  const handleEpisodeChange = (simulation, episode) => {
+    setSelectedEpisode((prev) => ({
+      ...prev,
+      [simulation]: episode,
+    }));
+
+    // Reset graph and equipment selections
+    setSelectedSimulationGraph((prev) => ({
+      ...prev,
+      [simulation]: null,
+    }));
+    setSelectedSimulationEquipment((prev) => ({
+      ...prev,
+      [simulation]: null,
+    }));
+  };
 
   return (
     <Container fluid>
@@ -173,10 +204,37 @@ function RecDashboard() {
           {selectedSimulations.sort().map((simulation, index) => (
             <Tab eventKey={simulation} title={simulation} key={index}>
               <Row>
+                <Col>
+                  {availableEpisodes[simulation] && availableEpisodes[simulation].length > 1 && (
+                    <Form.Group controlId={`episodeSelect-${simulation}`} className="mb-2">
+                      <Form.Label>Select Episode</Form.Label>
+                      <Form.Control
+                        as="select"
+                        value={selectedEpisode[simulation] || availableEpisodes[simulation][0]}
+                        onChange={(e) => handleEpisodeChange(simulation, e.target.value)}
+                      >
+                        {availableEpisodes[simulation].map((ep) => (
+                          <option key={ep} value={ep}>
+                            {`Episode ${ep.replace(/ep/i, "")}`}
+                          </option>
+                        ))}
+                      </Form.Control>
+                    </Form.Group>
+                  )}
+                </Col>
+              </Row>
+              <Row>
                 <Col lg="3">
                   {parsedSimulations[simulation] && (
                     <DynamicTreeList
-                      folderData={parsedSimulations[simulation]}
+                      folderData={
+                        Object.fromEntries(
+                          Object.entries(parsedSimulations[simulation]).filter(([key]) =>
+                            key.includes(selectedEpisode[simulation] || availableEpisodes[simulation]?.[0])
+                          )
+                        )
+                      }
+                      selectedEpisode={selectedEpisode[simulation] || availableEpisodes[simulation][0]}
                       setSelectedGraph={(graphData) => handleGraphSelection(simulation, graphData)}
                       setSelectedEquipment={(equipmentData) => handleEquipmentSelection(simulation, equipmentData)}
                     />
@@ -228,55 +286,51 @@ function RecDashboard() {
   );
 }
 
-// Dynamic tree built from folderData keys
-const DynamicTreeList = ({ folderData, setSelectedGraph, setSelectedEquipment }) => {
+const DynamicTreeList = ({ folderData, selectedEpisode, setSelectedGraph, setSelectedEquipment }) => {
   const [openBuildings, setOpenBuildings] = useState({});
   const [openEVs, setOpenEVs] = useState(false);
   const [openPricing, setOpenPricing] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
+  const stripEpisode = (key) => key.replace(/_ep\d+$/i, '');
+
   const toggleSection = (id) => {
     setOpenBuildings((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const toggleEVsSection = () => {
-    setOpenEVs((prev) => !prev);
+  const toggleEVsSection = () => setOpenEVs((prev) => !prev);
+  const togglePricingSection = () => setOpenPricing((prev) => !prev);
+
+  const handleProductionClick = (fullKey) => {
+    setSelectedItem(`${fullKey}_production`);
+    setSelectedGraph({ title: `${formatLabel(stripEpisode(fullKey))} Production`, data: folderData[fullKey] });
   };
 
-  const togglePricingSection = () => {
-    setOpenPricing((prev) => !prev);
+  const handleConsumptionClick = (fullKey) => {
+    setSelectedItem(`${fullKey}_consumption`);
+    setSelectedGraph({ title: `${formatLabel(stripEpisode(fullKey))} Consumption`, data: folderData[fullKey] });
   };
 
-  const handleProductionClick = (building) => {
-    setSelectedItem(`${building}_production`);
-    setSelectedGraph({ title: `${formatLabel(building)} Production`, data: folderData[building] });
+  const handleChargerClick = (chargerKey) => {
+    const match = stripEpisode(chargerKey).match(/^building_(\d+)_charger_\d+_(\d+)$/);
+    setSelectedItem(`${chargerKey}_charger_info`);
+    setSelectedEquipment({ title: `Building ${match[1]} - Charger ${match[2]} Data`, data: folderData[chargerKey] });
   };
 
-  const handleConsumptionClick = (building) => {
-    setSelectedItem(`${building}_consumption`);
-    setSelectedGraph({ title: `${formatLabel(building)} Consumption`, data: folderData[building] });
+  const handleBatteryClick = (batteryKey) => {
+    const match = stripEpisode(batteryKey).match(/^building_(\d+)_battery/);
+    setSelectedItem(`${batteryKey}_battery_info`);
+    setSelectedEquipment({ title: `Building ${match[1]} - Battery Data`, data: folderData[batteryKey] });
   };
 
-  const handleChargerClick = (charger) => {
-    const match = charger.match(/^building_(\d+)_charger_\d+_(\d+)$/);
-    setSelectedItem(`${charger}_charger_info`);
-    setSelectedEquipment({ title: `Building ${match[1]} - Charger ${match[2]} Data`, data: folderData[charger] });
+  const handleEVClick = (evKey) => {
+    setSelectedItem(`${evKey}_ev_info`);
+    setSelectedEquipment({ title: `${formatLabel(stripEpisode(evKey))} Data`, data: folderData[evKey] });
   };
 
-  const handleBatteryClick = (battery) => {
-    const match = battery.match(/^building_(\d+)_battery/);
-    setSelectedItem(`${battery}_battery_info`);
-    setSelectedEquipment({ title: `Building ${match[1]} - Battery Data`, data: folderData[battery] });
-  };
-
-  const handleEVClick = (equipment) => {
-    setSelectedItem(`${equipment}_ev_info`);
-    setSelectedEquipment({ title: `${formatLabel(equipment)} Data`, data: folderData[equipment] });
-  };
-
-  const handlePricingClick = (data) => {
+  const handlePricingClick = (pricingKey) => {
     setSelectedItem(`pricing_info`);
-    setSelectedEquipment({ title: `Pricing Info`, data: data });
+    setSelectedEquipment({ title: `Pricing Info`, data: folderData[pricingKey] });
   };
 
   const formatLabel = (label) =>
@@ -284,34 +338,41 @@ const DynamicTreeList = ({ folderData, setSelectedGraph, setSelectedEquipment })
 
   const buildingGroups = {};
   const evsGroup = [];
+  let pricingKey = null;
 
-  Object.keys(folderData).forEach((key) => {
-    const normalizedKey = key.toLowerCase();
+  Object.keys(folderData).forEach((fullKey) => {
+    const key = fullKey.toLowerCase();
+    const baseKey = stripEpisode(key);
 
-    const chargerMatch = normalizedKey.match(/^building_(\d+)_charger_\d+_(\d+)$/);
-    const batteryMatch = normalizedKey.match(/^building_(\d+)_battery/);
-    const isBuilding = normalizedKey.startsWith("building_");
-    const isEV = normalizedKey.includes("electric_vehicle");
+    const chargerMatch = baseKey.match(/^building_(\d+)_charger_\d+_(\d+)$/);
+    const batteryMatch = baseKey.match(/^building_(\d+)_battery/);
+    const isBuilding = baseKey.startsWith("building_") && !chargerMatch && !batteryMatch;
+    const isEV = baseKey.includes("electric_vehicle");
 
+    // Chargers/Batteries grouped under parent building
     if (chargerMatch || batteryMatch) {
       const buildingKey = `building_${(chargerMatch || batteryMatch)[1]}`;
-
       if (!buildingGroups[buildingKey]) {
-        buildingGroups[buildingKey] = { hasData: true, chargers: [], batteries: [] };
+        buildingGroups[buildingKey] = { chargers: [], batteries: [] };
       }
 
       const category = chargerMatch ? "chargers" : "batteries";
-      buildingGroups[buildingKey][category].push(key);
+      buildingGroups[buildingKey][category].push(fullKey);
     } else if (isBuilding) {
-      if (!buildingGroups[normalizedKey]) {
-        buildingGroups[normalizedKey] = { hasData: true, chargers: [], batteries: [] };
+      if (!buildingGroups[baseKey]) {
+        buildingGroups[baseKey] = { chargers: [], batteries: [] };
       }
     }
 
-    if (isEV) evsGroup.push(key);
+    if (isEV) {
+      evsGroup.push(fullKey);
+    }
+
+    if (key.startsWith("pricing") && !pricingKey) {
+      pricingKey = fullKey;
+    }
   });
 
-  // --- Sorting buildings normally ---
   const sortedBuildings = [...new Set(Object.keys(buildingGroups))].sort((a, b) => {
     const numA = parseInt(a.match(/\d+/)?.[0] || "0", 10);
     const numB = parseInt(b.match(/\d+/)?.[0] || "0", 10);
@@ -329,11 +390,11 @@ const DynamicTreeList = ({ folderData, setSelectedGraph, setSelectedEquipment })
           </ListGroup.Item>
           <Collapse in={openBuildings[building]}>
             <div style={{ marginLeft: "1rem" }}>
-              <ListGroup.Item action onClick={() => handleProductionClick(building)} active={selectedItem === `${building}_production`}>
+              <ListGroup.Item action onClick={() => handleProductionClick(building + "_" + selectedEpisode)} active={selectedItem === `${building + "_" + selectedEpisode}_production`}>
                 <FaIndustry style={{ marginRight: "8px" }} />
                 Production
               </ListGroup.Item>
-              <ListGroup.Item action onClick={() => handleConsumptionClick(building)} active={selectedItem === `${building}_consumption`}>
+              <ListGroup.Item action onClick={() => handleConsumptionClick(building + "_" + selectedEpisode)} active={selectedItem === `${building + "_" + selectedEpisode}_consumption`}>
                 <FaPlug style={{ marginRight: "8px" }} />
                 Consumption
               </ListGroup.Item>
@@ -393,7 +454,7 @@ const DynamicTreeList = ({ folderData, setSelectedGraph, setSelectedEquipment })
                 <ListGroup.Item key={ev} action onClick={() => handleEVClick(ev)}
                   active={selectedItem === `${ev}_ev_info`}>
                   <FaBolt style={{ marginRight: "8px" }} />
-                  {formatLabel(ev)}
+                  {formatLabel(stripEpisode(ev))}
                 </ListGroup.Item>
               ))}
             </div>
@@ -402,7 +463,7 @@ const DynamicTreeList = ({ folderData, setSelectedGraph, setSelectedEquipment })
       )}
 
       {/* Pricing Section */}
-      {folderData["pricing"] && folderData["pricing"].length > 0 && (
+      {pricingKey && folderData[pricingKey]?.length > 0 && (
         <React.Fragment>
           <ListGroup.Item
             className="d-flex align-items-center"
@@ -414,7 +475,7 @@ const DynamicTreeList = ({ folderData, setSelectedGraph, setSelectedEquipment })
           </ListGroup.Item>
           <Collapse in={openPricing}>
             <div style={{ marginLeft: "1rem" }}>
-              <ListGroup.Item key={"pricing"} action onClick={() => handlePricingClick(folderData["pricing"])}
+              <ListGroup.Item key={"pricing"} action onClick={() => handlePricingClick(pricingKey)}
                 active={selectedItem === `pricing_info`}>
                 <FaMoneyBill style={{ marginRight: "8px" }} />
                 Pricing Data
