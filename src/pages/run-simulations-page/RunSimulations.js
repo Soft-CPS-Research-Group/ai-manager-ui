@@ -3,8 +3,10 @@ import {
     Button,
     Container,
     Row,
-    Col
+    Col,
+    Form
 } from "react-bootstrap";
+import { ToastContainer, toast } from 'react-toastify';
 import { FaPlay, FaUpload } from "react-icons/fa";
 
 function RunSimulations() {
@@ -12,6 +14,12 @@ function RunSimulations() {
     const [targetContainer, setTargetContainer] = useState("");
     const [availableHosts, setAvailableHosts] = useState([]);
     const fileInputRef = useRef(null);
+
+    const [fileName, setFileName] = useState("");
+    const handleFileName = async (e) => {
+        const file = e.target.value;
+        setFileName(file);
+    };
 
     const handleSchemaUpload = async (event) => {
         const file = event.target.files[0];
@@ -57,15 +65,13 @@ function RunSimulations() {
 
     const handleRunSimulation = async () => {
         try {
-            const parsedConfig = JSON.parse(schemaInfo);
-    
-            const fileName = "simulation_config.json";
             const jsonOutput = {
-                config: parsedConfig,
-                save_as: fileName,
+                config_path: fileName,
                 target_host: targetContainer,
             };
-    
+
+            console.log(jsonOutput)
+
             const response = await fetch("run-simulation", {
                 method: "POST",
                 headers: {
@@ -73,24 +79,35 @@ function RunSimulations() {
                 },
                 body: JSON.stringify(jsonOutput)
             });
-    
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
+
+            if (response.ok) {
+                toast.success('Simulation started successfully!', {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false
+                });
+            } else {
+                toast.error('Error starting simulation!', {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false
+                });
             }
-    
-            const result = await response.json();
-            console.log("Simulation started successfully:", result);
         } catch (error) {
-            console.error("Error running simulation:", error);
+            toast.error('Error starting simulation!', {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false
+            });
         }
-    };  
+    };
 
     return (
         <>
             <Container fluid>
-                <div className="d-flex justify-content-between gap-2">
+                <div className="d-flex justify-content-end gap-2">
                     {/* Hidden File Input */}
-                    <input
+                    {/* <input
                         type="file"
                         accept=".json"
                         onChange={handleSchemaUpload}
@@ -105,54 +122,37 @@ function RunSimulations() {
                     >
                         <FaUpload style={{ marginRight: "10px" }} />
                         Upload Schema
-                    </Button>
+                    </Button> */}
 
-                    {schemaInfo !== "" &&
-                        <Button className="d-flex align-items-center" variant="primary" onClick={handleRunSimulation}>
-                            <FaPlay style={{ marginRight: "10px" }} />
-                            Run Simulation
-                        </Button>
-                    }
+                    <Button className="d-flex align-items-center" variant="primary" onClick={handleRunSimulation}>
+                        <FaPlay style={{ marginRight: "10px" }} />
+                        Run Simulation
+                    </Button>
+                    <ToastContainer />
                 </div>
 
-                {schemaInfo && (
-                    <>
-                        <Row className="mt-3">
-                            <Col>
-                                <h4>Schema Config:</h4>
-                                <textarea
-                                    value={schemaInfo}
-                                    readOnly={true}
-                                    style={{
-                                        width: "100%",
-                                        height: "500px",
-                                        fontFamily: "monospace",
-                                        fontSize: "14px",
-                                        padding: "10px",
-                                        border: "1px solid #ccc",
-                                        borderRadius: "5px",
-                                        resize: "vertical",
-                                        backgroundColor: "white"
-                                    }}
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col>
-                                <h4>Target Container:</h4>
-                                <select value={targetContainer} onChange={handleTargetChange} className="w-25"
-                                    style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
-                                >
-                                    {availableHosts.map((host, index) => (
-                                        <option key={index} value={host.name}>
-                                            {host.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </Col>
-                        </Row>
-                    </>
-                )}
+                <>
+                    <Row className="mt-3">
+                        <Col>
+                            <h4>File Name:</h4>
+                            <Form.Control className="w-25" type="text" name="name" value={fileName} onChange={handleFileName} />
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col>
+                            <h4>Target Container:</h4>
+                            <select value={targetContainer} onChange={handleTargetChange} className="w-25"
+                                style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
+                            >
+                                {availableHosts.map((host, index) => (
+                                    <option key={index} value={host.name}>
+                                        {host.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </Col>
+                    </Row>
+                </>
             </Container>
         </>
     );

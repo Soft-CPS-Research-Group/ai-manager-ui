@@ -9,7 +9,7 @@ import DateRangeSlider from "../components/DateRangeSlider";
 const floorToMidnightUTC = (timestamp) => {
     const date = new Date(timestamp);
 
-    if(date.getHours() != 0 || date.getMinutes() != 0 || date.getSeconds() != 0) {
+    if (date.getHours() != 0 || date.getMinutes() != 0 || date.getSeconds() != 0) {
         date.setUTCHours(0, 0, 0, 0);
     }
 
@@ -19,7 +19,7 @@ const floorToMidnightUTC = (timestamp) => {
 const ceilToEndOfDayUTC = (timestamp) => {
     const date = new Date(timestamp);
 
-    if(date.getHours() != 23 || date.getMinutes() != 59 || date.getSeconds() != 59) {
+    if (date.getHours() != 23 || date.getMinutes() != 59 || date.getSeconds() != 59) {
         date.setUTCHours(23, 59, 59, 999);
     }
 
@@ -48,12 +48,12 @@ function CardPricing({ data, title }) {
     const [timeInterval, setTimeInterval] = useState(baseIntervalMinutes);
     const [intervalInput, setIntervalInput] = useState(baseIntervalMinutes);
 
-    const handleSliderChange = (values) => setSliderValues(values);
-
     const handleApplyInterval = () => {
         const clamped = Math.max(baseIntervalMinutes, Math.min(60, intervalInput));
         setTimeInterval(clamped);
     };
+
+    const handleSliderChange = (values) => setSliderValues(values);
 
     const filteredData = updatedData.filter(
         (item) => item.timestamp >= sliderValues[0] && item.timestamp <= sliderValues[1]

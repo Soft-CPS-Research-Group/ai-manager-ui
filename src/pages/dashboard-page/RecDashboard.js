@@ -174,6 +174,7 @@ function RecDashboard() {
             onChange={handleFolderUpload}
             ref={fileInputRef}
             style={{ display: "none" }}
+            aria-label="Upload simulation data"
           />
 
           <Button
@@ -206,7 +207,7 @@ function RecDashboard() {
               <Row>
                 <Col>
                   {availableEpisodes[simulation] && availableEpisodes[simulation].length > 1 && (
-                    <Form.Group controlId={`episodeSelect-${simulation}`} className="mb-2">
+                    <Form.Group controlId={`episodeSelect-${simulation}`} className="mb-2 w-25">
                       <Form.Label>Select Episode</Form.Label>
                       <Form.Control
                         as="select"

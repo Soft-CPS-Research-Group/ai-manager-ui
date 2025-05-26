@@ -20,7 +20,9 @@ import UseCases from "pages/use-cases-page/UseCases.js";
 import KPIs from "pages/kpis-page/KPIs.js";
 import Maps from "pages/map-page/Maps.js";
 import SimualtionListPage from "pages/simulation-list-page/SimualtionListPage.js";
+import DatasetsPage from "pages/datasets-page/DatasetsPage.js";
 import SchemaPage from "pages/schema-page/SchemaPage.js";
+import ExperimentConfigsPage from "pages/experiment-configs-page/ExperimentConfigsPage.js";
 import RunSimulations from "pages/run-simulations-page/RunSimulations";
 
 const dashboardRoutes = [
@@ -29,49 +31,72 @@ const dashboardRoutes = [
     name: "REC Dashboard",
     icon: "nc-icon nc-chart-pie-35",
     component: RecDashboard,
-    layout: "/admin"
-  },
-  {
-    path: "/use-cases",
-    name: "Use Cases",
-    icon: "nc-icon nc-chart-pie-35",
-    component: UseCases,
-    layout: "/admin"
+    layout: "/admin",
+    userType: "training-manager"
   },
   {
     path: "/kpis",
     name: "KPIs",
     icon: "nc-icon nc-notes",
     component: KPIs,
-    layout: "/admin"
+    layout: "/admin",
+    userType: "training-manager"
   },
   {
     path: "/maps",
     name: "Map",
     icon: "nc-icon nc-pin-3",
     component: Maps,
-    layout: "/admin"
+    layout: "/admin",
+    userType: "training-manager"
   },
   {
     path: "/simulation-list",
     name: "Simulations",
     icon: "nc-icon nc-paper-2",
     component: SimualtionListPage,
-    layout: "/admin"
-  },
-  {
-    path: "/schema",
-    name: "Schema",
-    icon: "nc-icon nc-puzzle-10",
-    component: SchemaPage,
-    layout: "/admin"
+    layout: "/admin",
+    userType: "training-manager"
   },
   {
     path: "/run-simulations",
     name: "Run Simulations",
     icon: "nc-icon nc-button-play",
     component: RunSimulations,
-    layout: "/admin"
+    layout: "/admin",
+    userType: "training-manager"
+  },
+  {
+    path: "/use-cases",
+    name: "Use Cases",
+    icon: "nc-icon nc-chart-pie-35",
+    component: UseCases,
+    layout: "/admin",
+    userType: "rec-manager"
+  },
+  {
+    path: "/datasets",
+    name: "Datasets",
+    icon: "nc-icon nc-single-copy-04",
+    component: DatasetsPage,
+    layout: "/admin",
+    userType: "rec-manager"
+  },
+  {
+    path: "/schema",
+    name: "Schema",
+    icon: "nc-icon nc-puzzle-10",
+    component: SchemaPage,
+    layout: "/admin",
+    userType: "rec-manager"
+  },
+  {
+    path: "/configs",
+    name: "Experiment Configs",
+    icon: "nc-icon nc-settings-gear-64",
+    component: ExperimentConfigsPage,
+    layout: "/admin",
+    userType: "rec-manager"
   }
 ];
 

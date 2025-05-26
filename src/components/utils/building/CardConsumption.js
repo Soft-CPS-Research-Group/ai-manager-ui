@@ -140,26 +140,19 @@ function CardConsumption({ data, title }) {
                             Interval (minutes):
                         </span>
                         <input
-                            type="number"
-                            min={baseIntervalMinutes}
-                            max={60}
-                            value={intervalInput}
+                            type="number" min={baseIntervalMinutes} max={60} value={intervalInput}
                             onChange={(e) => {
                                 const val = parseInt(e.target.value);
                                 setIntervalInput(Number.isNaN(val) ? baseIntervalMinutes : val);
                             }}
-                            style={{ width: "80px", marginRight: "10px", marginLeft: "5px" }}
-                        />
+                            style={{ width: "80px", marginRight: "10px", marginLeft: "5px" }}/>
                     </label>
                     <Button
-                        className="p-2"
-                        variant="secondary"
-                        onClick={handleApplyInterval}
+                        className="p-2" variant="secondary" onClick={handleApplyInterval}
                         disabled={
                             intervalInput < baseIntervalMinutes ||
                             intervalInput > 60
-                        }
-                    >
+                        }>
                         Apply
                     </Button>
                 </div>

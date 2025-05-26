@@ -20,13 +20,20 @@ import { useLocation, NavLink } from "react-router-dom";
 
 import { Nav } from "react-bootstrap";
 
-import logo from "assets/img/reactlogo.png";
-
 function Sidebar({ color, image, routes }) {
   const location = useLocation();
+
   const activeRoute = (routeName) => {
     return location.pathname.indexOf(routeName) > -1 ? "active" : "";
   };
+
+  // Group routes by userType
+  const groupedRoutes = routes.reduce((acc, route) => {
+    if (!acc[route.userType]) acc[route.userType] = [];
+    acc[route.userType].push(route);
+    return acc;
+  }, {});
+
   return (
     <div className="sidebar" data-image={image} data-color={color}>
       <div
@@ -37,37 +44,43 @@ function Sidebar({ color, image, routes }) {
       />
       <div className="sidebar-wrapper">
         <div className="logo d-flex align-items-center">
-          {/* INSERIR LOGO AQUI */}
-          <a target="_blank" href="http://www.citylearn.net/index.html"
-            className="text-white">
+          <a target="_blank" href="http://www.citylearn.net/index.html" className="text-white">
             <p>CityLearn</p>
           </a>
         </div>
 
         <Nav>
-          {routes.map((prop, key) => {
-            if (!prop.redirect)
-              return (
-                <li
-                  className={
-                    prop.upgrade
-                      ? "active active-pro"
-                      : activeRoute(prop.layout + prop.path)
-                  }
-                  key={key}
-                >
-                  <NavLink
-                    to={prop.layout + prop.path}
-                    className="nav-link"
-                    activeClassName="active"
-                  >
-                    <i className={prop.icon} />
-                    <p>{prop.name}</p>
-                  </NavLink>
-                </li>
-              );
-            return null;
-          })}
+          {Object.entries(groupedRoutes).map(([userType, userRoutes], index) => (
+            <React.Fragment key={index}>
+              <li className="nav-title text-white px-3 pt-3 text-uppercase font-weight-bold">
+                {userType === "training-manager" ? "Training Manager" : "REC Manager"}
+              </li>
+              {userRoutes.map((prop, key) => {
+                if (!prop.redirect) {
+                  return (
+                    <li
+                      className={
+                        prop.upgrade
+                          ? "active active-pro"
+                          : activeRoute(prop.layout + prop.path)
+                      }
+                      key={key}
+                    >
+                      <NavLink
+                        to={prop.layout + prop.path}
+                        className="nav-link"
+                        activeClassName="active"
+                      >
+                        <i className={prop.icon} />
+                        <p>{prop.name}</p>
+                      </NavLink>
+                    </li>
+                  );
+                }
+                return null;
+              })}
+            </React.Fragment>
+          ))}
         </Nav>
       </div>
     </div>

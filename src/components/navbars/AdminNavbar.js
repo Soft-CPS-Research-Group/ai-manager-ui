@@ -44,9 +44,9 @@ function Header() {
     return "Brand";
   };
   return (
-    <Navbar className="py-0" bg="light" expand="lg">
+    <Navbar bg="light" expand="lg">
       <Container fluid>
-        <div className="d-flex justify-content-center align-items-center ml-2 ml-lg-0">
+        <div className="d-flex justify-content-center align-items-center ml-2 ml-lg-0 pb-0">
           <Button
             variant="dark"
             className="d-lg-none btn-fill d-flex justify-content-center align-items-center rounded-circle p-2"
@@ -57,12 +57,11 @@ function Header() {
           <Navbar.Brand
             href="#home"
             onClick={(e) => e.preventDefault()}
-            className="mr-2"
           >
             {getBrandText()}
           </Navbar.Brand>
         </div>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" className="mr-2">
+        {/* <Navbar.Toggle aria-controls="basic-navbar-nav" className="mr-2">
           <span className="navbar-toggler-bar burger-lines"></span>
           <span className="navbar-toggler-bar burger-lines"></span>
           <span className="navbar-toggler-bar burger-lines"></span>
@@ -106,7 +105,7 @@ function Header() {
               </Nav.Link>
             </Nav.Item>
           </Nav>
-        </Navbar.Collapse>
+        </Navbar.Collapse> */}
       </Container>
     </Navbar>
   );

@@ -156,6 +156,7 @@ function KPIs() {
               onChange={handleFolderUpload}
               ref={fileInputRef}
               style={{ display: "none" }}
+              aria-label="Upload simulation data"
             />
 
             <Button
