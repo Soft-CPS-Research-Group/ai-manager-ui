@@ -127,7 +127,7 @@ function CardConsumptionDB({ data, title }) {
     return (
         <>
             <div className='d-flex justify-content-between align-items-center'>
-                <h5>{title}</h5>
+                <span className="mb-3">{title}</span>
 
                 <div style={{ marginBottom: "1rem" }}>
                     <label>

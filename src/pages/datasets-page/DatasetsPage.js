@@ -63,7 +63,7 @@ export default function DatasetsPage() {
         central_agent: false,
         simulation_start_time_step: 0,
         simulation_end_time_step: 8759,
-        episode_time_steps: "",
+        episode_time_steps: 1,
         rolling_episode_split: false,
         random_episode_split: false,
         seconds_per_time_step: 3600,
@@ -206,7 +206,7 @@ export default function DatasetsPage() {
                     <Row>
                         <Col md={6}>
                             <h4>Dataset Name</h4>
-                            <Form.Control type="text" name="name" value={datasetName} onChange={handleDatasetName} />
+                            <Form.Control type="text" name="name" value={datasetName} onChange={handleDatasetName} aria-label="Dataset Name" />
                         </Col>
                         <Col md={3}>
                             <h4>Site</h4>
@@ -217,7 +217,7 @@ export default function DatasetsPage() {
                                 borderRadius: "5px",
                                 width: "100%",
                                 textAlign: "left"
-                            }} value={datasetSite} onChange={handleDatasetSite}>
+                            }} value={datasetSite} onChange={handleDatasetSite} aria-label="Dataset Site">
                                 {siteList.map((site) => (
                                     <option key={site} value={site}>{site}</option>
                                 ))}
@@ -245,15 +245,15 @@ export default function DatasetsPage() {
                     <Row>
                         <Col md={4}>
                             <h4>Period</h4>
-                            <Form.Control type="number" name="period" min={1} value={datasetPeriod} onChange={handleDatasetPeriod} />
+                            <Form.Control type="number" name="period" min={1} value={datasetPeriod} onChange={handleDatasetPeriod} aria-label="Period" />
                         </Col>
                         <Col md={4}>
                             <h4>From</h4>
-                            <Form.Control type="datetime-local" name="from" value={dateFrom} onChange={handleDateFrom} />
+                            <Form.Control type="datetime-local" name="from" value={dateFrom} onChange={handleDateFrom} aria-label="From" />
                         </Col>
                         <Col md={4}>
                             <h4>Until</h4>
-                            <Form.Control type="datetime-local" name="until" value={dateUntil} onChange={handleDateUntil} />
+                            <Form.Control type="datetime-local" name="until" value={dateUntil} onChange={handleDateUntil} aria-label="Until" />
                         </Col>
                     </Row>
                 </>
@@ -278,40 +278,40 @@ const BaseInfoForm = ({ formData, setFormData }) => {
             <Row>
                 <Col className="mb-2" md={6}>
                     <Form.Group>
-                        <Form.Label>Random Seed</Form.Label>
-                        <Form.Control type="number" name="random_seed" value={formData.random_seed} onChange={handleChange} />
+                        <Form.Label htmlFor="random_seed">Random Seed</Form.Label>
+                        <Form.Control type="number" id="random_seed" name="random_seed" value={formData.random_seed} onChange={handleChange} aria-label="Random Seed" />
                     </Form.Group>
                 </Col>
                 <Col className="mb-2" md={6}>
                     <Form.Group>
-                        <Form.Label>Root Directory</Form.Label>
-                        <Form.Control type="text" name="root_directory" value={formData.root_directory} onChange={handleChange} />
+                        <Form.Label htmlFor="root_directory">Root Directory</Form.Label>
+                        <Form.Control type="text" id="root_directory" name="root_directory" value={formData.root_directory} onChange={handleChange} aria-label="Root Directory" />
                     </Form.Group>
                 </Col>
 
                 <Col className="mb-2" md={6}>
                     <Form.Group>
-                        <Form.Label>Simulation Start Time Step</Form.Label>
-                        <Form.Control type="number" name="simulation_start_time_step" value={formData.simulation_start_time_step} onChange={handleChange} />
+                        <Form.Label htmlFor="simulation_start_time_step">Simulation Start Time Step</Form.Label>
+                        <Form.Control type="number" id="simulation_start_time_step" name="simulation_start_time_step" value={formData.simulation_start_time_step} onChange={handleChange} aria-label="Simulation Start Time Step" />
                     </Form.Group>
                 </Col>
                 <Col className="mb-2" md={6}>
                     <Form.Group>
-                        <Form.Label>Simulation End Time Step</Form.Label>
-                        <Form.Control type="number" name="simulation_end_time_step" value={formData.simulation_end_time_step} onChange={handleChange} />
+                        <Form.Label htmlFor="simulation_end_time_step">Simulation End Time Step</Form.Label>
+                        <Form.Control type="number" id="simulation_end_time_step" name="simulation_end_time_step" value={formData.simulation_end_time_step} onChange={handleChange} aria-label="Simulation End Time Step" />
                     </Form.Group>
                 </Col>
 
                 <Col md={6}>
                     <Form.Group>
-                        <Form.Label>Episode Time Steps</Form.Label>
-                        <EpisodeTimeStepSelector name="Episode Time Steps" formData={formData} setFormData={setFormData} />
+                        <Form.Label htmlFor="episode_time_steps">Episode Time Steps</Form.Label>
+                        <Form.Control type="number" id="episode_time_steps" name="episode_time_steps" value={formData.episode_time_steps} onChange={handleChange} aria-label="Episode Time Steps" />
                     </Form.Group>
                 </Col>
                 <Col md={6}>
                     <Form.Group>
-                        <Form.Label>Seconds per Time Step</Form.Label>
-                        <Form.Control type="number" name="seconds_per_time_step" value={formData.seconds_per_time_step} onChange={handleChange} />
+                        <Form.Label htmlFor="seconds_per_time_step">Seconds per Time Step</Form.Label>
+                        <Form.Control type="number" id="seconds_per_time_step" name="seconds_per_time_step" value={formData.seconds_per_time_step} onChange={handleChange} aria-label="Seconds Per Time Step" />
                     </Form.Group>
                 </Col>
             </Row>
@@ -423,7 +423,7 @@ const AgentForm = ({ onChange, setValid }) => {
                 <Row className="mb-3">
                     <Col md={6}>
                         <Form.Group>
-                            <Form.Label className="d-flex">Agent Type</Form.Label>
+                            <Form.Label className="d-flex" htmlFor="agent_type">Agent Type</Form.Label>
                             <Form.Select
                                 style={{
                                     padding: "10px",
@@ -435,7 +435,7 @@ const AgentForm = ({ onChange, setValid }) => {
                                     textAlign: "left"
                                 }}
                                 value={selectedType}
-                                onChange={handleTypeChange}
+                                onChange={handleTypeChange} id="agent_type" aria-label="Agent Type"
                             >
                                 {agentTypes.map((type) => (
                                     <option key={type} value={type}>{type}</option>
@@ -446,7 +446,7 @@ const AgentForm = ({ onChange, setValid }) => {
 
                     <Col md={6}>
                         <Form.Group>
-                            <Form.Label>Agent Config (.json)</Form.Label>
+                            <Form.Label htmlFor="agent_config">Agent Config (.json)</Form.Label>
                             <input
                                 type="file"
                                 accept=".json"
@@ -459,6 +459,8 @@ const AgentForm = ({ onChange, setValid }) => {
                                     cursor: "pointer",
                                     width: "100%"
                                 }}
+                                id="agent_config"
+                                aria-label="Agent Config"
                             />
                         </Form.Group>
                     </Col>
@@ -548,7 +550,7 @@ const RewardFunctionForm = ({ onChange }) => {
             <Row className="mb-3">
                 <Col md={6}>
                     <Form.Group>
-                        <Form.Label className="d-flex">Reward Function Type</Form.Label>
+                        <Form.Label className="d-flex" htmlFor="reward_function">Reward Function Type</Form.Label>
                         <Form.Select style={{
                             padding: "10px",
                             cursor: "pointer",
@@ -556,7 +558,7 @@ const RewardFunctionForm = ({ onChange }) => {
                             borderRadius: "5px",
                             width: "100%",
                             textAlign: "left"
-                        }} value={selectedType} onChange={handleTypeChange}>
+                        }} value={selectedType} onChange={handleTypeChange} id="reward_function" aria-label="Reward Function Type">
                             {rewardFunctionTypes.map((type) => (
                                 <option key={type} value={type}>{type}</option>
                             ))}
@@ -660,124 +662,6 @@ const Selector = ({ name, options, setOptions }) => {
                             ))}
                         </tbody>
                     </table>
-                </div>
-            )}
-        </div>
-    );
-};
-
-const EpisodeTimeStepSelector = ({ name, formData, setFormData }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [ranges, setRanges] = useState([[0, 0.8]]); // Default range
-
-    // Handle range input change
-    const handleRangeChange = (index, field, value) => {
-        const updatedRanges = [...ranges];
-        updatedRanges[index][field] = parseFloat(value) || 0;
-        setRanges(updatedRanges);
-        setFormData({ ...formData, episode_time_steps: updatedRanges });
-    };
-
-    // Add new row
-    const addRow = () => {
-        setRanges([...ranges, [0, 0]]);
-    };
-
-    // Remove row
-    const removeRow = (index) => {
-        const updatedRanges = ranges.filter((_, i) => i !== index);
-        setRanges(updatedRanges);
-        setFormData({ ...formData, episode_time_steps: updatedRanges });
-    };
-
-    return (
-        <div style={{ width: "100%", position: "relative", display: "inline-block" }}>
-            {/* Dropdown Button */}
-            <button
-                type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                style={{
-                    padding: "10px",
-                    background: "lightgray",
-                    border: "none",
-                    cursor: "pointer",
-                    borderRadius: "5px",
-                    width: "100%",
-                    textAlign: "left",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                }}
-            >
-                <span>{name}</span>
-                {isOpen ? <FaArrowUp /> : <FaArrowDown />}
-            </button>
-
-            {/* Dropdown Table */}
-            {isOpen && (
-                <div
-                    style={{
-                        position: "absolute",
-                        top: "100%",
-                        left: "0",
-                        background: "#fff",
-                        border: "1px solid #ddd",
-                        borderRadius: "8px",
-                        padding: "10px",
-                        boxShadow: "2px 2px 5px rgba(0,0,0,0.2)",
-                        width: "100%",
-                        maxHeight: "300px",
-                        overflowY: "auto",
-                        zIndex: 10,
-                    }}
-                >
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                        <thead>
-                            <tr style={{ background: "#f5f5f5", textAlign: "left" }}>
-                                <th style={{ padding: "8px" }}>Min</th>
-                                <th style={{ padding: "8px" }}>Max</th>
-                                <th style={{ padding: "8px" }}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {ranges.map((range, index) => (
-                                <tr key={index} style={{ borderBottom: "1px solid #ddd" }}>
-                                    <td>
-                                        <Form.Control
-                                            type="number"
-                                            step="0.1"
-                                            value={range[0]}
-                                            onChange={(e) => handleRangeChange(index, 0, e.target.value)}
-                                        />
-                                    </td>
-                                    <td>
-                                        <Form.Control
-                                            type="number"
-                                            step="0.1"
-                                            value={range[1]}
-                                            onChange={(e) => handleRangeChange(index, 1, e.target.value)}
-                                        />
-                                    </td>
-                                    <td style={{ paddingLeft: "10px" }}>
-                                        <Button variant="danger" style={{
-                                            padding: "5px 10px",
-                                            background: "red",
-                                            color: "#fff",
-                                            border: "none",
-                                            borderRadius: "5px",
-                                            cursor: "pointer"
-                                        }} onClick={() => removeRow(index)} disabled={ranges.length === 1}>
-                                            ✖
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <Button className="d-flex align-items-center" variant="primary" onClick={addRow} style={{ marginTop: "5px" }}>
-                        <FaPlus></FaPlus>
-                        <span style={{ paddingLeft: "5px" }}>Add Row</span>
-                    </Button>
                 </div>
             )}
         </div>

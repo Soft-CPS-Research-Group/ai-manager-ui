@@ -32,7 +32,7 @@ const dashboardRoutes = [
     icon: "nc-icon nc-chart-pie-35",
     component: RecDashboard,
     layout: "/admin",
-    userType: "training-manager"
+    userType: "ai-engineer"
   },
   {
     path: "/kpis",
@@ -40,45 +40,53 @@ const dashboardRoutes = [
     icon: "nc-icon nc-notes",
     component: KPIs,
     layout: "/admin",
-    userType: "training-manager"
+    userType: "ai-engineer"
   },
-  {
-    path: "/maps",
-    name: "Map",
-    icon: "nc-icon nc-pin-3",
-    component: Maps,
-    layout: "/admin",
-    userType: "training-manager"
-  },
-  {
-    path: "/simulation-list",
-    name: "Simulations",
-    icon: "nc-icon nc-paper-2",
-    component: SimualtionListPage,
-    layout: "/admin",
-    userType: "training-manager"
-  },
+  // {
+  //   path: "/maps",
+  //   name: "Map",
+  //   icon: "nc-icon nc-pin-3",
+  //   component: Maps,
+  //   layout: "/admin",
+  //   userType: "ai-engineer"
+  // },
+  // {
+  //   path: "/simulation-list",
+  //   name: "Simulations",
+  //   icon: "nc-icon nc-paper-2",
+  //   component: SimualtionListPage,
+  //   layout: "/admin",
+  //   userType: "ai-engineer"
+  // },
   {
     path: "/run-simulations",
     name: "Run Simulations",
     icon: "nc-icon nc-button-play",
     component: RunSimulations,
     layout: "/admin",
-    userType: "training-manager"
-  },
-  {
-    path: "/use-cases",
-    name: "Use Cases",
-    icon: "nc-icon nc-chart-pie-35",
-    component: UseCases,
-    layout: "/admin",
-    userType: "rec-manager"
+    userType: "ai-engineer"
   },
   {
     path: "/datasets",
     name: "Datasets",
     icon: "nc-icon nc-single-copy-04",
     component: DatasetsPage,
+    layout: "/admin",
+    userType: "ai-engineer"
+  },
+  {
+    path: "/configs",
+    name: "Experiment Configs",
+    icon: "nc-icon nc-settings-gear-64",
+    component: ExperimentConfigsPage,
+    layout: "/admin",
+    userType: "ai-engineer"
+  },
+  {
+    path: "/use-cases",
+    name: "Use Cases",
+    icon: "nc-icon nc-chart-pie-35",
+    component: UseCases,
     layout: "/admin",
     userType: "rec-manager"
   },
@@ -90,14 +98,6 @@ const dashboardRoutes = [
     layout: "/admin",
     userType: "rec-manager"
   },
-  {
-    path: "/configs",
-    name: "Experiment Configs",
-    icon: "nc-icon nc-settings-gear-64",
-    component: ExperimentConfigsPage,
-    layout: "/admin",
-    userType: "rec-manager"
-  }
 ];
 
 export default dashboardRoutes;

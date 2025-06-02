@@ -3,7 +3,8 @@ import {
     Button,
     Row,
     Col,
-    Form
+    Form,
+    Card
 } from "react-bootstrap";
 import { ToastContainer, toast } from 'react-toastify';
 
@@ -93,8 +94,8 @@ function ExperimentConfigsPage() {
                 <>
                     <Row className="mt-3">
                         <Col>
-                            <h4>File Name:</h4>
-                            <Form.Control className="w-25" type="text" name="name" value={fileName} onChange={handleFileName} />
+                            <Card.Title>File Name:</Card.Title>
+                            <Form.Control className="w-25" type="text" name="name" value={fileName} onChange={handleFileName} aria-label="File Name"/>
                             {fileName != "" && !fileNameIsValid && (
                                 <div className="text-danger mt-1">
                                     File name is invalid
@@ -102,9 +103,9 @@ function ExperimentConfigsPage() {
                             )}
                         </Col>
                     </Row>
-                    <Row>
+                    <Row className="mt-3">
                         <Col>
-                            <h4>Config Attributes:</h4>
+                            <Card.Title>Config Attributes:</Card.Title>
                             <textarea
                                 value={jsonText}
                                 style={{
@@ -118,7 +119,7 @@ function ExperimentConfigsPage() {
                                     resize: "vertical",
                                     backgroundColor: isValidJson ? "white" : "#ffe5e5"
                                 }}
-                                onChange={handleConfigChange}
+                                onChange={handleConfigChange} aria-label="Config Attributes"
                             />
                             {!isValidJson && (
                                 <p style={{ color: "red", fontSize: "12px", marginTop: "5px" }}>

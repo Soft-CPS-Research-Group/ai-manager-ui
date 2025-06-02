@@ -4,15 +4,20 @@ import {
     Container,
     Row,
     Col,
-    Form
+    Card
 } from "react-bootstrap";
 import { ToastContainer, toast } from 'react-toastify';
 import { FaPlay, FaUpload } from "react-icons/fa";
 
 function RunSimulations() {
     const [schemaInfo, setSchemaInfo] = useState("");
+
+    const [file, setFile] = useState("");
+    const [availableFiles, setAvailableFiles] = useState([]);
+
     const [targetContainer, setTargetContainer] = useState("");
     const [availableHosts, setAvailableHosts] = useState([]);
+
     const fileInputRef = useRef(null);
 
     const [fileName, setFileName] = useState("");
@@ -43,10 +48,11 @@ function RunSimulations() {
     };
 
     useEffect(() => {
-        fetchData();
+        fetchHosts();
+        fetchFiles();
     }, []);
 
-    const fetchData = async () => {
+    const fetchHosts = async () => {
         try {
             const res = await fetch("hosts");
             const json = await res.json();
@@ -59,6 +65,23 @@ function RunSimulations() {
         }
     };
 
+    const fetchFiles = async () => {
+        try {
+            const res = await fetch("experiment-configs");
+            const json = await res.json();
+            if (json) {
+                setAvailableFiles(json);
+                setFile(json[0] || "");
+            }
+        } catch (err) {
+            console.error("Fetch error:", err);
+        }
+    };
+
+    const handleFileChange = (e) => {
+        setFile(e.target.value);
+    }
+
     const handleTargetChange = (e) => {
         setTargetContainer(e.target.value);
     }
@@ -66,7 +89,7 @@ function RunSimulations() {
     const handleRunSimulation = async () => {
         try {
             const jsonOutput = {
-                config_path: fileName,
+                config_path: file,
                 target_host: targetContainer,
             };
 
@@ -134,16 +157,24 @@ function RunSimulations() {
                 <>
                     <Row className="mt-3">
                         <Col>
-                            <h4>File Name:</h4>
-                            <Form.Control className="w-25" type="text" name="name" value={fileName} onChange={handleFileName} />
+                            <Card.Title>File Name:</Card.Title>
+                            <select value={file} onChange={handleFileChange} className="w-25"
+                                style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
+                                aria-label="File Name">
+                                {availableFiles.map((file, index) => (
+                                    <option key={index} value={file}>
+                                        {file}
+                                    </option>
+                                ))}
+                            </select>
                         </Col>
                     </Row>
-                    <Row>
+                    <Row className="mt-3">
                         <Col>
-                            <h4>Target Container:</h4>
+                            <Card.Title>Target Container:</Card.Title>
                             <select value={targetContainer} onChange={handleTargetChange} className="w-25"
                                 style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
-                            >
+                                aria-label="Target Container">
                                 {availableHosts.map((host, index) => (
                                     <option key={index} value={host.name}>
                                         {host.name}

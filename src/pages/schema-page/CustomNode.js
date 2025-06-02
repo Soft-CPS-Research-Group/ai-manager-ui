@@ -232,16 +232,16 @@ const CustomNode = ({ data, id, selected }) => {
                 {data.type === "building" && (
                     <div style={{ textAlign: "left", fontSize: "12px" }}>
                         <label className="mb-1">Energy Simualtion File:</label>
-                        <input className="mb-1" type="text" name="energy_simulation" value={formData.energy_simulation} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        <input className="mb-1" type="text" name="energy_simulation" aria-label="Energy Simulation File" value={formData.energy_simulation} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
                         <label className="mb-1">Weather File:</label>
-                        <input className="mb-1" type="text" name="weather" value={formData.weather} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        <input className="mb-1" type="text" name="weather" aria-label="Weather File" value={formData.weather} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
                         <label className="mb-1">Carbon Intensity File:</label>
-                        <input className="mb-1" type="text" name="carbon_intensity" value={formData.carbon_intensity} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        <input className="mb-1" type="text" name="carbon_intensity" aria-label="Carbon Intensity File" value={formData.carbon_intensity} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
                         <label className="mb-1">Pricing File:</label>
-                        <input className="mb-1" type="text" name="pricing" value={formData.pricing} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        <input className="mb-1" type="text" name="pricing" aria-label="Pricing File" value={formData.pricing} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
                         <label className="mb-1">Inactive Observations:</label>
                         <Selector name={"Observation"} data={data} options={observations} setOptions={setObservations} />
@@ -255,19 +255,19 @@ const CustomNode = ({ data, id, selected }) => {
                 {data.type === "ev" && (
                     <div style={{ textAlign: "left", fontSize: "12px" }}>
                         <label className="mb-1">File Name:</label>
-                        <input className="mb-1" type="text" name="energy_simulation" value={formData.energy_simulation} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        <input className="mb-1" type="text" name="energy_simulation" aria-label={"energy_simulation"} value={formData.energy_simulation} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
                         <label className="mb-1">Battery Capacity (kWh):</label>
-                        <input className="mb-1" type="number" name="capacity" value={formData.capacity} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        <input className="mb-1" type="number" name="capacity" aria-label={"capacity"} value={formData.capacity} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
                         <label className="mb-1">Battery Nominal Power (kW):</label>
-                        <input className="mb-1" type="number" name="nominal_power" value={formData.nominal_power} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        <input className="mb-1" type="number" name="nominal_power" aria-label={"nominal_power"} value={formData.nominal_power} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
                         <label className="mb-1">Battery Initial SOC:</label>
-                        <input className="mb-1" type="number" step="0.01" name="initial_soc" value={formData.initial_soc} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        <input className="mb-1" type="number" step="0.01" name="initial_soc" aria-label={"initial_soc"} value={formData.initial_soc} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
                         <label className="mb-1">Battery Depth of Discharge:</label>
-                        <input className="mb-1" type="number" step="0.01" name="depth_of_discharge" value={formData.depth_of_discharge} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        <input className="mb-1" type="number" step="0.01" name="depth_of_discharge" aria-label={"depth_of_discharge"} value={formData.depth_of_discharge} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
                     </div>
                 )}
 
@@ -275,7 +275,7 @@ const CustomNode = ({ data, id, selected }) => {
                 {data.type === "pv" && (
                     <div style={{ textAlign: "left", fontSize: "12px" }}>
                         <label className="mb-1">Type:</label>
-                        <select
+                        <select aria-label="select"
                             value={selectedPVType}
                             onChange={(e) => {
                                 const selectedIndex = e.target.selectedIndex;
@@ -300,6 +300,7 @@ const CustomNode = ({ data, id, selected }) => {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     style={{ width: "100%" }}
+                                    aria-label={name}
                                 />
                             </div>
                         ))}
@@ -310,7 +311,7 @@ const CustomNode = ({ data, id, selected }) => {
                 {data.type === "charger" && (
                     <div style={{ textAlign: "left", fontSize: "12px" }}>
                         <label className="mb-1">Type:</label>
-                        <select
+                        <select aria-label="select"
                             value={selectedChargerType}
                             onChange={(e) => {
                                 const selectedIndex = e.target.selectedIndex;
@@ -337,6 +338,7 @@ const CustomNode = ({ data, id, selected }) => {
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         style={{ width: "100%" }}
+                                        aria-label="Charger"
                                     />
                                 }
 
@@ -358,7 +360,7 @@ const CustomNode = ({ data, id, selected }) => {
                 {data.type === "cooling_device" && (
                     <div style={{ textAlign: "left", fontSize: "12px" }}>
                         <label className="mb-1">Type:</label>
-                        <select
+                        <select aria-label="select"
                             value={selectedCoolingDeviceType}
                             onChange={(e) => {
                                 const selectedIndex = e.target.selectedIndex;
@@ -373,7 +375,7 @@ const CustomNode = ({ data, id, selected }) => {
                         </select>
 
                         <label className="mb-1">Safety Factor:</label>
-                        <input className="mb-1" type="text" name="safety_factor" value={formData.safety_factor} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        <input className="mb-1" type="text" name="safety_factor" aria-label={"safety_factor"} value={formData.safety_factor} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
                         {typesAttributes[selectedCoolingDeviceType]?.map(({ name, type, label, defaultValue }) => (
                             <div key={name}>
@@ -386,6 +388,7 @@ const CustomNode = ({ data, id, selected }) => {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     style={{ width: "100%" }}
+                                    aria-label={name}
                                 />
                             </div>
                         ))}
@@ -396,7 +399,7 @@ const CustomNode = ({ data, id, selected }) => {
                 {data.type === "heating_device" && (
                     <div style={{ textAlign: "left", fontSize: "12px" }}>
                         <label className="mb-1">Type:</label>
-                        <select
+                        <select aria-label="select"
                             value={selectedHeatingDeviceType}
                             onChange={(e) => {
                                 const selectedIndex = e.target.selectedIndex;
@@ -411,7 +414,7 @@ const CustomNode = ({ data, id, selected }) => {
                         </select>
 
                         <label className="mb-1">Safety Factor:</label>
-                        <input className="mb-1" type="text" name="safety_factor" value={formData.safety_factor} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        <input className="mb-1" type="text" name="safety_factor" aria-label={"safety_factor"} value={formData.safety_factor} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
                         {typesAttributes[selectedHeatingDeviceType]?.map(({ name, type, label, defaultValue }) => (
                             <div key={name}>
@@ -424,6 +427,7 @@ const CustomNode = ({ data, id, selected }) => {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     style={{ width: "100%" }}
+                                    aria-label={name}
                                 />
                             </div>
                         ))}
@@ -434,7 +438,7 @@ const CustomNode = ({ data, id, selected }) => {
                 {data.type === "dhw_device" && (
                     <div style={{ textAlign: "left", fontSize: "12px" }}>
                         <label className="mb-1">Type:</label>
-                        <select
+                        <select aria-label="select"
                             value={selectedDHWDeviceType}
                             onChange={(e) => {
                                 const selectedIndex = e.target.selectedIndex;
@@ -449,7 +453,7 @@ const CustomNode = ({ data, id, selected }) => {
                         </select>
 
                         <label className="mb-1">Safety Factor:</label>
-                        <input className="mb-1" type="text" name="safety_factor" value={formData.safety_factor} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        <input className="mb-1" type="text" name="safety_factor" aria-label={"safety_factor"} value={formData.safety_factor} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
                         {typesAttributes[selectedDHWDeviceType]?.map(({ name, type, label, defaultValue }) => (
                             <div key={name}>
@@ -462,6 +466,7 @@ const CustomNode = ({ data, id, selected }) => {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     style={{ width: "100%" }}
+                                    aria-label={name}
                                 />
                             </div>
                         ))}
@@ -472,7 +477,7 @@ const CustomNode = ({ data, id, selected }) => {
                 {data.type === "dhw_storage" && (
                     <div style={{ textAlign: "left", fontSize: "12px" }}>
                         <label className="mb-1">Type:</label>
-                        <select
+                        <select aria-label="select"
                             value={selectedDHWStorageType}
                             onChange={(e) => {
                                 const selectedIndex = e.target.selectedIndex;
@@ -497,6 +502,7 @@ const CustomNode = ({ data, id, selected }) => {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     style={{ width: "100%" }}
+                                    aria-label={name}
                                 />
                             </div>
                         ))}
@@ -507,7 +513,7 @@ const CustomNode = ({ data, id, selected }) => {
                 {data.type === "cooling_storage" && (
                     <div style={{ textAlign: "left", fontSize: "12px" }}>
                         <label className="mb-1">Type:</label>
-                        <select
+                        <select aria-label="select"
                             value={selectedCoolingStorageType}
                             onChange={(e) => {
                                 const selectedIndex = e.target.selectedIndex;
@@ -532,6 +538,7 @@ const CustomNode = ({ data, id, selected }) => {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     style={{ width: "100%" }}
+                                    aria-label={name}
                                 />
                             </div>
                         ))}
@@ -542,7 +549,7 @@ const CustomNode = ({ data, id, selected }) => {
                 {data.type === "heating_storage" && (
                     <div style={{ textAlign: "left", fontSize: "12px" }}>
                         <label className="mb-1">Type:</label>
-                        <select
+                        <select aria-label="select"
                             value={selectedHeatingStorageType}
                             onChange={(e) => {
                                 const selectedIndex = e.target.selectedIndex;
@@ -567,6 +574,7 @@ const CustomNode = ({ data, id, selected }) => {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     style={{ width: "100%" }}
+                                    aria-label={name}
                                 />
                             </div>
                         ))}
@@ -577,7 +585,7 @@ const CustomNode = ({ data, id, selected }) => {
                 {data.type === "electrical_storage" && (
                     <div style={{ textAlign: "left", fontSize: "12px" }}>
                         <label className="mb-1">Type:</label>
-                        <select
+                        <select aria-label="select"
                             value={selectedElectricalStorageType}
                             onChange={(e) => {
                                 const selectedIndex = e.target.selectedIndex;
@@ -604,6 +612,7 @@ const CustomNode = ({ data, id, selected }) => {
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         style={{ width: "100%" }}
+                                        aria-label={name}
                                     />
                                 }
 
@@ -794,7 +803,7 @@ const ChargerSelector = ({ data }) => {
 
     return (
         <div>
-            <select
+            <select aria-label="select"
                 name="chargerType"
                 value={selectedCharger}
                 onChange={handleTypeChange}

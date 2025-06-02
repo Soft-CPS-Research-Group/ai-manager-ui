@@ -200,7 +200,7 @@ function KPIs() {
                         <Card.Header>
                           <div className="d-flex justify-content-between">
                             <div>
-                              <Card.Title as="h4">KPIs for {simulation}</Card.Title>
+                              <Card.Title>KPIs for {simulation}</Card.Title>
                               <p className="card-category">Parsed from exported_kpis.csv</p>
                             </div>
                             {selectedSimulations.length > 1 && <Button variant="primary" onClick={() => handleCompare(simulation)}>Compare</Button>}
@@ -257,7 +257,7 @@ function KPIs() {
                         <Card.Header>
                           <div className="d-flex justify-content-between">
                             <div>
-                              <Card.Title as="h4">Comparison between {simulationToCompareFrom} and {simulationToCompareTo}</Card.Title>
+                              <Card.Title>Comparison between {simulationToCompareFrom} and {simulationToCompareTo}</Card.Title>
                             </div>
                           </div>
 

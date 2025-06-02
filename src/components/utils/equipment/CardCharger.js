@@ -177,7 +177,7 @@ function CardCharger({ data, title }) {
     return (
         <>
             <div className="d-flex justify-content-between align-items-center">
-                <h5>{title}</h5>
+                <span className="mb-3">{title}</span>
 
                 <div>
                     <label>

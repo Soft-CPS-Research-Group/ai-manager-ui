@@ -51,15 +51,13 @@ function Header() {
             variant="dark"
             className="d-lg-none btn-fill d-flex justify-content-center align-items-center rounded-circle p-2"
             onClick={mobileSidebarToggle}
+            aria-label="Menu"
           >
             <i className="fas fa-ellipsis-v"></i>
           </Button>
-          <Navbar.Brand
-            href="#home"
-            onClick={(e) => e.preventDefault()}
-          >
-            {getBrandText()}
-          </Navbar.Brand>
+          <Navbar.Text>
+            <h1 className="m-1" style={{ fontSize: '20px' }}>{getBrandText()}</h1>
+          </Navbar.Text>
         </div>
         {/* <Navbar.Toggle aria-controls="basic-navbar-nav" className="mr-2">
           <span className="navbar-toggler-bar burger-lines"></span>

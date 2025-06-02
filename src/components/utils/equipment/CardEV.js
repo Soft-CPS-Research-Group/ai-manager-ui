@@ -143,9 +143,7 @@ function CardEV({ data, title }) {
     return (
         <>
             <div className='d-flex justify-content-between align-items-center'>
-                <div>
-                    <h5>{title}</h5>
-                </div>
+                <span className="mb-3">{title}</span>
                 <div>
                     <label>
                         <span title={`Base interval from data: ${baseIntervalMinutes} minute(s)`}>

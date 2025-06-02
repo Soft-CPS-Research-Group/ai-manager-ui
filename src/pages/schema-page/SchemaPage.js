@@ -437,7 +437,7 @@ export default function SchemaPage() {
                     <Row>
                         <Col>
                             <h4>Site Name</h4>
-                            <Form.Control className="w-25" type="text" name="site_name" value={siteName} onChange={handleSiteChange} />
+                            <Form.Control className="w-25" type="text" name="site_name" value={siteName} onChange={handleSiteChange} aria-label="Site Name"/>
                         </Col>
                     </Row>
                     <h4>Schema Info</h4>
