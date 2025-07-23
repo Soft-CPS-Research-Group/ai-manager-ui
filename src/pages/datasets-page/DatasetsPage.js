@@ -349,23 +349,27 @@ const BaseInfoForm = ({ formData, setFormData }) => {
 }
 
 // Form with the agent information
-const AgentForm = ({ onChange, setValid }) => {
-    const agentTypes = [
-        "citylearn.agents.rbc.BasicBatteryRBC",
-        "citylearn.agents.rbc.BasicRBC",
-        "citylearn.agents.rbc.HourRBC",
-        "citylearn.agents.rbc.OptimizedRBC",
-        "citylearn.agents.rbc.RBC",
-        "citylearn.agents.sac.SAC",
-        "citylearn.agents.sac.SACRBC",
-        "citylearn.agents.marlisa.MARLISA",
-        "citylearn.agents.marlisa.MARLISARBC",
-    ];
-
-    const [selectedType, setSelectedType] = useState(agentTypes[0]);
+const agentTypes = [
+    "citylearn.agents.rbc.BasicBatteryRBC",
+    "citylearn.agents.rbc.BasicRBC",
+    "citylearn.agents.rbc.HourRBC",
+    "citylearn.agents.rbc.OptimizedRBC",
+    "citylearn.agents.rbc.RBC",
+    "citylearn.agents.sac.SAC",
+    "citylearn.agents.sac.SACRBC",
+    "citylearn.agents.marlisa.MARLISA",
+    "citylearn.agents.marlisa.MARLISARBC",
+];
+const AgentForm = ({ onChange, setValid, initialType = agentTypes[0] }) => {
+    const [selectedType, setSelectedType] = useState(initialType);
     const [jsonAttributes, setJsonAttributes] = useState({});
     const [jsonText, setJsonText] = useState("");
     const [isValidJson, setIsValidJson] = useState(true);
+
+    // Initialize the value on the selector
+    useEffect(() => {
+        onChange({ type: initialType, attributes: {} });
+    }, [initialType]);
 
     const handleTypeChange = (e) => {
         const newType = e.target.value;
@@ -520,26 +524,30 @@ const AgentForm = ({ onChange, setValid }) => {
 };
 
 // Form with the reward function information
-const RewardFunctionForm = ({ onChange }) => {
-    const rewardFunctionTypes = [
-        "citylearn.reward_function.RewardFunction",
-        "citylearn.reward_function.MARL",
-        "citylearn.reward_function.IndependentSACReward",
-        "citylearn.reward_function.SolarPenaltyReward",
-        "citylearn.reward_function.ComfortReward",
-        "citylearn.reward_function.SolarPenaltyAndComfortReward",
-        "citylearn.reward_function.V2GPenaltyReward"
-    ];
-
+const rewardFunctionTypes = [
+    "citylearn.reward_function.RewardFunction",
+    "citylearn.reward_function.MARL",
+    "citylearn.reward_function.IndependentSACReward",
+    "citylearn.reward_function.SolarPenaltyReward",
+    "citylearn.reward_function.ComfortReward",
+    "citylearn.reward_function.SolarPenaltyAndComfortReward",
+    "citylearn.reward_function.V2GPenaltyReward"
+];
+const RewardFunctionForm = ({ onChange, initialType = rewardFunctionTypes[0] }) => {
     // State for selected function type
-    const [selectedType, setSelectedType] = useState(rewardFunctionTypes[0]);
+    const [selectedType, setSelectedType] = useState(initialType);
+
+    // Initialize the value on the selector
+    useEffect(() => {
+        onChange({ type: initialType });
+    }, [initialType]);
 
     // Handle select change
     const handleTypeChange = (e) => {
         const newType = e.target.value;
         setSelectedType(newType);
 
-        onChange({ type: selectedType });
+        onChange({ type: newType });
     };
 
     return (
