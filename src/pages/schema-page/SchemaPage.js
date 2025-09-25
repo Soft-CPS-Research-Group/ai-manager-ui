@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Row, Col, Button, Form, Control } from "react-bootstrap";
+import { Row, Col, Button, Form, Card, Modal, Spinner } from "react-bootstrap";
 import { ToastContainer, toast } from 'react-toastify';
 import {
     ReactFlow,
@@ -11,6 +11,8 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { FaBuilding, FaCar, FaPlug, FaBolt, FaSnowflake, FaFireAlt, FaBox } from "react-icons/fa";
+import ReactPaginate from "react-paginate";
+import '../../assets/css/pagination.css';
 
 // Custom node with that represents elements from the schema
 import CustomNode from "./CustomNode";
@@ -55,7 +57,17 @@ const Sidebar = ({ onDragStart }) => (
 );
 
 export default function SchemaPage() {
-    const [show, setShow] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const [showList, setShowList] = useState(true);
+    const [showCreate, setShowCreate] = useState(false);
+
+    const [siteList, setSiteList] = useState([]);
+    const [siteSchemaInfo, setSiteSchemaInfo] = useState([]);
+
+    const [selectedSite, setSelectedSite] = useState({});
+    const [showSiteSchemaModal, setShowSiteSchemaModal] = useState(false);
+
     const [nodes, setNodes] = useState([]);
     const [edges, setEdges] = useState([]);
     const [nodeCounts, setNodeCounts] =
@@ -72,6 +84,55 @@ export default function SchemaPage() {
     const handleSiteChange = async (e) => {
         const site = e.target.value;
         setSiteName(site);
+    };
+
+    //Pagination Settings
+    const itemsPerPage = 10;
+    const [currentPage, setCurrentPage] = useState(0);
+
+    const offset = currentPage * itemsPerPage;
+    const currentItems = siteList.slice(offset, offset + itemsPerPage);
+    const pageCount = Math.ceil(siteList.length / itemsPerPage);
+
+    const fetchSites = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("sites");
+            const json = await res.json();
+            if (json.sites) {
+                setSiteList(json.sites);
+            }
+        } catch (err) {
+            toast.error('Failed to fetch the sites.', {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchSiteSchema = async (site) => {
+        try {
+            const res = await fetch(`schema/${site}`);
+
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            } else {
+                const json = await res.json();
+                if (json) {
+                    setSiteSchemaInfo(json);
+                    setShowSiteSchemaModal(true);
+                }
+            }
+        } catch (err) {
+            toast.error('Failed to fetch the site schema.', {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false
+            });
+        }
     };
 
     // Track selected nodes
@@ -110,6 +171,7 @@ export default function SchemaPage() {
     }, [copiedNode, selectedNodes, setNodes]);
 
     useEffect(() => {
+        fetchSites();
         document.addEventListener("keydown", handleKeyDown);
         return () => document.removeEventListener("keydown", handleKeyDown);
     }, [handleKeyDown]);
@@ -156,8 +218,6 @@ export default function SchemaPage() {
                 }
             }
         });
-
-        //console.log(JSON.stringify(schema, null, 2));
 
         try {
             const body = {
@@ -424,20 +484,110 @@ export default function SchemaPage() {
     return (
         <>
             <Row>
-                <Col className="d-flex flex-row-reverse">
-                    {!show && <Button variant="primary" onClick={() => setShow(true)}>New Schema</Button>}
-                    {show && <Button variant={siteName == "" ? "secondary" : "primary"} onClick={handleSaveSchema} disabled={siteName == ""}>Save Schema</Button>}
-                    {show && <Button variant="danger" style={{ marginRight: 15 }} onClick={() => setShow(false)}>Cancel</Button>}
+                <Col className="d-flex justify-content-between align-items-center">
+                    <div>
+                        {showList &&
+                            <h4 className="d-flex align-items-center m-0">{siteList.length} Items Found</h4>
+                        }
+                    </div>
+                    <div>
+                        {!showCreate && <Button variant="primary" onClick={() => {
+                            setShowList(false);
+                            setShowCreate(true);
+                        }}>New Schema</Button>}
+                        {showCreate && <Button className="mr-2" variant={siteName == "" ? "secondary" : "primary"} onClick={handleSaveSchema}
+                            disabled={siteName == ""}>Save Schema</Button>}
+                        {showCreate && <Button variant="danger" onClick={() => {
+                            setShowList(true);
+                            setShowCreate(false);
+                        }}>Cancel</Button>}
+                    </div>
                 </Col>
                 <ToastContainer />
             </Row>
 
-            {show && (
+            {loading && showList &&
+                <Spinner className="mt-4" animation="border" />
+            }
+
+            {!loading && showList && (siteList.length > 0) && (
+                <>
+                    <Row className="mt-4">
+                        {currentItems.length > 0 &&
+                            currentItems.map((site, index) => (
+                                <Col md="6" key={index}>
+                                    <Card className="mb-2">
+                                        <Card.Header className="d-flex justify-content-between py-3">
+                                            <a href="#" onClick={(e) => {
+                                                e.preventDefault();
+                                                setSelectedSite(site);
+                                                fetchSiteSchema(site);
+                                            }}><b>{site}</b></a>
+                                        </Card.Header>
+                                    </Card>
+                                </Col>
+                            ))
+                        }
+                    </Row>
+                    <ReactPaginate
+                        previousLabel={"Prev"}
+                        nextLabel={"Next"}
+                        breakLabel={"..."}
+                        pageCount={pageCount}
+                        marginPagesDisplayed={2}
+                        pageRangeDisplayed={3}
+                        onPageChange={(event) => setCurrentPage(event.selected)}
+                        containerClassName={"pagination justify-content-center mt-4"}
+                        pageClassName={"page-item"}
+                        pageLinkClassName={"page-link"}
+                        previousClassName={"page-item"}
+                        previousLinkClassName={"page-link"}
+                        nextClassName={"page-item"}
+                        nextLinkClassName={"page-link"}
+                        breakClassName={"page-item"}
+                        breakLinkClassName={"page-link"}
+                        activeClassName={"active"}
+                    />
+
+                    {/* Config details modal */}
+                    <Modal size="lg" show={showSiteSchemaModal} onHide={() => setShowSiteSchemaModal(false)}>
+                        <div className="py-0 px-3 d-flex align-items-center justify-content-between">
+                            <h3>{selectedSite} schema details</h3>
+                            <Button variant="danger" type="button" size="xs" onClick={() => setShowSiteSchemaModal(false)}>
+                                <i className="fa fa-times"></i>
+                            </Button>
+                        </div>
+                        <Modal.Body style={{
+                            height: "50vh",
+                            display: "flex",
+                            flexDirection: "column"
+                        }}>
+                            <textarea
+                                value={JSON.stringify(siteSchemaInfo, null, 2)}
+                                readOnly={true}
+                                style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    fontFamily: "monospace",
+                                    fontSize: "14px",
+                                    padding: "10px",
+                                    border: "1px solid #ccc",
+                                    borderRadius: "5px",
+                                    resize: "none",
+                                    backgroundColor: "white"
+                                }}
+                            />
+                        </Modal.Body>
+                    </Modal>
+                </>
+            )}
+
+            {showCreate && (
                 <>
                     <Row>
                         <Col>
                             <h4>Site Name</h4>
-                            <Form.Control className="w-25" type="text" name="site_name" value={siteName} onChange={handleSiteChange} aria-label="Site Name"/>
+                            <Form.Control className="w-25" type="text" name="site_name" value={siteName} onChange={handleSiteChange} aria-label="Site Name" />
                         </Col>
                     </Row>
                     <h4>Schema Info</h4>

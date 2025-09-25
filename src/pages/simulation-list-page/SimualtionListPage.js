@@ -26,10 +26,6 @@ function SimualtionListPage() {
           <Col>
             <h4 className="d-flex align-items-center m-0">5 Items Found</h4>
           </Col>
-          <Col className="d-flex flex-row-reverse">
-            <Button className="d-flex align-items-center mb-3" onClick={handleShow}>
-              <i className="fa fa-plus"></i>New Simulation</Button>
-          </Col>
           <CreateSimulationModal show={show} onClose={handleClose} />
           <SimulationsList />
         </Row>

@@ -1,19 +1,34 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Button, Form } from "react-bootstrap";
+import { Row, Col, Button, Form, Card, Modal, Spinner } from "react-bootstrap";
 import { ToastContainer, toast } from 'react-toastify';
 import "@xyflow/react/dist/style.css";
-import { FaArrowUp, FaArrowDown, FaPlus } from "react-icons/fa";
+import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import dayjs from 'dayjs';
+import ReactPaginate from "react-paginate";
+import '../../assets/css/pagination.css';
 
 export default function DatasetsPage() {
+    const [loading, setLoading] = useState(false);
+
     const [valid, setValid] = useState(true);
-    const [show, setShow] = useState(false);
+    const [showList, setShowList] = useState(true);
+    const [showCreate, setShowCreate] = useState(false);
 
     const [datasetName, setDatasetName] = useState("");
     const handleDatasetName = async (e) => {
         const dataset = e.target.value;
         setDatasetName(dataset);
     };
+
+    const [datasetDescription, setDatasetDescription] = useState("");
+    const handleDatasetDescription = async (e) => {
+        const description = e.target.value;
+        setDatasetDescription(description);
+    };
+
+    const [datasetList, setDatasetList] = useState([]);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [datasetToDelete, setDatasetToDelete] = useState(null);
 
     const [siteList, setSiteList] = useState([]);
     const [datasetSite, setDatasetSite] = useState("");
@@ -22,19 +37,96 @@ export default function DatasetsPage() {
         setDatasetSite(dataset);
     };
 
+    //Pagination Settings
+    const itemsPerPage = 10;
+    const [currentPage, setCurrentPage] = useState(0);
+
+    const offset = currentPage * itemsPerPage;
+    const currentItems = datasetList.slice(offset, offset + itemsPerPage);
+    const pageCount = Math.ceil(datasetList.length / itemsPerPage);
+
     useEffect(() => {
-        fetchData();
+        fetchDatasets();
+        fetchSites();
     }, []);
 
-    const fetchData = async () => {
+    const fetchDatasets = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("datasets");
+            const json = await res.json();
+            if (json) {
+                setDatasetList(json);
+            }
+        } catch (err) {
+            toast.error('Failed to fetch the datasets.', {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const downloadDataset = async (dataset) => {
+        try {
+            const res = await fetch(`dataset/download/${dataset}`);
+            if (res.ok) {
+                // Convert response into a file Blob
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+
+                // Extract filename from Content-Disposition header
+                const disposition = res.headers.get("content-disposition");
+                let filename = `${dataset}.dat`; // fallback default
+                if (disposition && disposition.includes("filename=")) {
+                    const match = disposition.match(/filename="?([^"]+)"?/);
+                    if (match && match[1]) {
+                        filename = match[1];
+                    }
+                }
+
+                // Create a link and trigger download
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+
+                // Cleanup
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } else {
+                toast.error("Failed to download the dataset (server error).", {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                });
+            }
+        } catch (err) {
+            toast.error('Failed to download the dataset.', {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false
+            });
+        }
+    };
+
+    const fetchSites = async () => {
         try {
             const res = await fetch("sites");
             const json = await res.json();
             if (json.sites) {
                 setSiteList(json.sites);
+                setDatasetSite(json.sites[0]);
             }
         } catch (err) {
-            console.error("Fetch error:", err);
+            toast.error('Failed to fetch the sites.', {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false
+            });
         }
     };
 
@@ -151,13 +243,12 @@ export default function DatasetsPage() {
         try {
             const body = {
                 name: datasetName,
+                description: datasetDescription,
                 site_id: datasetSite,
                 citylearn_configs: configs,
                 from_ts: dayjs(dateFrom).format("YYYY-MM-DD HH:mm:ss"),
                 until_ts: dayjs(dateUntil).format("YYYY-MM-DD HH:mm:ss"),
             };
-
-            console.log(body);
 
             const response = await fetch("dataset", {
                 method: "POST",
@@ -189,24 +280,152 @@ export default function DatasetsPage() {
         }
     };
 
+    const handleDeleteConfirmed = async () => {
+        try {
+            await fetch(`dataset/${datasetToDelete}`, { method: 'DELETE' });
+
+            setDatasetList((prev) => prev.filter(item => item.name !== datasetToDelete));
+            setShowDeleteModal(false);
+
+            toast.success('Dataset deleted successfully!', {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false
+            });
+        } catch (err) {
+            toast.error('Failed to delete the dataset.', {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false
+            });
+        }
+    };
+
     return (
         <>
             <Row>
-                <Col className="d-flex flex-row-reverse">
-                    {!show && <Button variant="primary" onClick={() => setShow(true)}>New Dataset</Button>}
-                    {show && <Button variant="primary" onClick={handleSaveDataset}>Save Dataset</Button>}
-                    {show && <Button variant="danger" style={{ marginRight: 15 }} onClick={() => setShow(false)}>Cancel</Button>}
+                <Col className="d-flex justify-content-between align-items-center">
+                    <div>
+                        {showList &&
+                            <h4 className="d-flex align-items-center m-0">{datasetList.length} Items Found</h4>
+                        }
+                    </div>
+                    <div>
+                        {!showCreate && <Button variant="primary" onClick={() => {
+                            setShowList(false);
+                            setShowCreate(true);
+                        }}>New Dataset</Button>}
+                        {showCreate && <Button className="mr-2" variant="primary" onClick={handleSaveDataset}>Save Dataset</Button>}
+                        {showCreate && <Button variant="danger" onClick={() => {
+                            setShowList(true);
+                            setShowCreate(false);
+                        }}>Cancel</Button>}
+                    </div>
                 </Col>
                 <ToastContainer />
             </Row>
 
+            {loading && showList &&
+                <Spinner className="mt-4" animation="border" />
+            }
+
+            {!loading && showList && (datasetList.length > 0) && (
+                <>
+                    <Row className="mt-4">
+                        {currentItems.length > 0 &&
+                            currentItems.map((dataset, index) => (
+                                <Col md="6" key={index}>
+                                    <Card className="mb-2">
+                                        <Card.Header className="d-flex justify-content-between">
+                                            <b>{dataset.name}</b>
+
+                                            <div>
+                                                <a href="#" onClick={(e) => {
+                                                    e.preventDefault();
+                                                    downloadDataset(dataset.name);
+                                                }} className="pe-auto mr-2"
+                                                >
+                                                    <i className="fa fa-download"></i>
+                                                </a>
+                                                <a href="#" onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setDatasetToDelete(dataset.name);
+                                                    setShowDeleteModal(true);
+                                                }} className="pe-auto"
+                                                >
+                                                    <i className="fa fa-trash text-danger"></i>
+                                                </a>
+                                            </div>
+                                        </Card.Header>
+                                        <Card.Body>
+                                            <div>
+                                                <p className="text-muted">
+                                                    {dataset.description == "" ? "No Description Available" : dataset.description}
+                                                </p>
+                                            </div>
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                            ))
+                        }
+                    </Row>
+                    <ReactPaginate
+                        previousLabel={"Prev"}
+                        nextLabel={"Next"}
+                        breakLabel={"..."}
+                        pageCount={pageCount}
+                        marginPagesDisplayed={2}
+                        pageRangeDisplayed={3}
+                        onPageChange={(event) => setCurrentPage(event.selected)}
+                        containerClassName={"pagination justify-content-center mt-4"}
+                        pageClassName={"page-item"}
+                        pageLinkClassName={"page-link"}
+                        previousClassName={"page-item"}
+                        previousLinkClassName={"page-link"}
+                        nextClassName={"page-item"}
+                        nextLinkClassName={"page-link"}
+                        breakClassName={"page-item"}
+                        breakLinkClassName={"page-link"}
+                        activeClassName={"active"}
+                    />
+
+                    {/* Delete confirmation modal */}
+                    <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+                        <div className="py-0 px-3 d-flex align-items-center justify-content-between">
+                            <h3>Confirm Delete</h3>
+                            <Button variant="danger" type="button" size="xs" onClick={() => setShowDeleteModal(false)}>
+                                <i className="fa fa-times"></i>
+                            </Button>
+                        </div>
+                        <Modal.Body>
+                            Are you sure you want to delete the dataset <b>{datasetToDelete}</b>?
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="danger"
+                                onClick={() => handleDeleteConfirmed()}
+                            >
+                                Delete
+                            </Button>
+                        </Modal.Footer>
+                    </Modal>
+                </>
+            )}
+
             {/* Form for input data */}
-            {show && (
+            {showCreate && (
                 <>
                     <Row>
                         <Col md={6}>
                             <h4>Dataset Name</h4>
                             <Form.Control type="text" name="name" value={datasetName} onChange={handleDatasetName} aria-label="Dataset Name" />
+                        </Col>
+                        <Col md={6}>
+                            <h4>Dataset Description</h4>
+                            <Form.Control type="text" name="description" value={datasetDescription} onChange={handleDatasetDescription} aria-label="Dataset Description" />
                         </Col>
                         <Col md={3}>
                             <h4>Site</h4>

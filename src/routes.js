@@ -42,14 +42,14 @@ const dashboardRoutes = [
     layout: "/admin",
     userType: "ai-engineer"
   },
-  // {
-  //   path: "/maps",
-  //   name: "Map",
-  //   icon: "nc-icon nc-pin-3",
-  //   component: Maps,
-  //   layout: "/admin",
-  //   userType: "ai-engineer"
-  // },
+  {
+    path: "/maps",
+    name: "Map",
+    icon: "nc-icon nc-pin-3",
+    component: Maps,
+    layout: "/admin",
+    userType: "ai-engineer"
+  },
   // {
   //   path: "/simulation-list",
   //   name: "Simulations",

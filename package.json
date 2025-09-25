@@ -4,6 +4,7 @@
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@fortawesome/fontawesome-free": "5.15.2",
+    "@react-spring/web": "^10.0.1",
     "@xyflow/react": "^12.4.4",
     "ajv": "^8.16.0",
     "bootstrap": "^4.6.2",
@@ -25,6 +26,7 @@
     "react-leaflet": "^4.2.1",
     "react-map-gl": "^7.1.7",
     "react-notification-alert": "0.0.13",
+    "react-paginate": "^8.3.0",
     "react-router": "5.2.0",
     "react-router-dom": "5.2.0",
     "react-scripts": "5.0.1",
