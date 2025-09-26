@@ -398,14 +398,31 @@ const Maps = () => {
     setCarEvents({});
     setPlaying(false);
   };
-  // O PROBLEMA DEVE SER DO ARRAY DOS COMMANDS, ELE PASSA POR TODOS DEVERIA CORTAR AO DAR SKIP PARA UMA PARTE
-  // Restart script when speed changes
+
+  // Used to keep track of the current time of the simulation timeline running
+  const [playheadTime, setPlayheadTime] = useState(0);
+
+  // Update playhead whenever step changes
+  useEffect(() => {
+    if (timelineScript.length > 0) {
+      setPlayheadTime(timelineScript[0].commands[currentStep].time);
+    }
+  }, [currentStep]);
+
+  // Speed changes
   useEffect(() => {
     if (playing && timelineScript.length > 0) {
-      stopScript();
-      setPlaying(true);
       timelineScript.forEach(scriptObj => {
-        runScript(scriptObj.element, scriptObj.commands);
+        const remaining = scriptObj.commands.filter(c => c.time > playheadTime);
+        if (remaining.length > 0) {
+          // normalize relative to playheadTime
+          const normalized = remaining.map(c => ({
+            ...c,
+            time: c.time - playheadTime
+          }));
+
+          runScript(scriptObj.element, normalized);
+        }
       });
     }
   }, [playbackSpeed]);
