@@ -50,6 +50,7 @@ export default function DatasetsPage() {
         fetchSites();
     }, []);
 
+    // Get detaset list
     const fetchDatasets = async () => {
         setLoading(true);
         try {
@@ -113,6 +114,7 @@ export default function DatasetsPage() {
         }
     };
 
+    // Get site list
     const fetchSites = async () => {
         try {
             const res = await fetch("sites");
@@ -205,6 +207,7 @@ export default function DatasetsPage() {
         electric_vehicle_storage: { active: false }
     });
 
+    // Create new dataset
     const handleSaveDataset = async () => {
         if (!valid) {
             alert("Invalid form data!");
@@ -280,6 +283,7 @@ export default function DatasetsPage() {
         }
     };
 
+    // Deletes selected dataset
     const handleDeleteConfirmed = async () => {
         try {
             await fetch(`dataset/${datasetToDelete}`, { method: 'DELETE' });

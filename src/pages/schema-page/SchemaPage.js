@@ -7,7 +7,8 @@ import {
     Background,
     applyNodeChanges,
     applyEdgeChanges,
-    addEdge
+    addEdge,
+    useReactFlow
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { FaBuilding, FaCar, FaPlug, FaBolt, FaSnowflake, FaFireAlt, FaBox } from "react-icons/fa";
@@ -56,6 +57,30 @@ const Sidebar = ({ onDragStart }) => (
     </div>
 );
 
+// Component that sets up the Delete key handler
+function DeleteKeyHandler() {
+    const { getNodes, getEdges, deleteElements } = useReactFlow();
+
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            // Prevent deleting while typing in inputs/textareas
+            if (["INPUT", "TEXTAREA"].includes(event.target.tagName)) return;
+
+            if (event.key === "Delete") {
+                deleteElements({
+                    nodes: getNodes().filter((n) => n.selected),
+                    edges: getEdges().filter((e) => e.selected),
+                });
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [getNodes, getEdges, deleteElements]);
+
+    return null; // this component doesn’t render anything
+}
+
 export default function SchemaPage() {
     const [loading, setLoading] = useState(false);
 
@@ -78,6 +103,7 @@ export default function SchemaPage() {
         });
 
     const [selectedNodes, setSelectedNodes] = useState([]);
+    const selectedEdges = edges.filter((e) => e.selected);
     const [copiedNode, setCopiedNode] = useState(null);
 
     const [siteName, setSiteName] = useState("");
@@ -86,7 +112,7 @@ export default function SchemaPage() {
         setSiteName(site);
     };
 
-    //Pagination Settings
+    // Pagination Settings
     const itemsPerPage = 10;
     const [currentPage, setCurrentPage] = useState(0);
 
@@ -94,6 +120,12 @@ export default function SchemaPage() {
     const currentItems = siteList.slice(offset, offset + itemsPerPage);
     const pageCount = Math.ceil(siteList.length / itemsPerPage);
 
+    // Get the site list when page loads
+    useEffect(() => {
+        fetchSites();
+    }, []);
+
+    // Get the list of sites
     const fetchSites = async () => {
         setLoading(true);
         try {
@@ -113,6 +145,7 @@ export default function SchemaPage() {
         }
     };
 
+    // Get the schema of a certain site
     const fetchSiteSchema = async (site) => {
         try {
             const res = await fetch(`schema/${site}`);
@@ -140,48 +173,99 @@ export default function SchemaPage() {
         setSelectedNodes(selected);
     }, []);
 
-    const handleKeyDown = useCallback((event) => {
-        if (event.ctrlKey || event.metaKey) {
-            if (event.key === "c") {
-                // Copy the first selected node
-                if (selectedNodes.length === 1) {
-                    setCopiedNode(selectedNodes[0]);
-                }
-            }
-            if (event.key === "v" && copiedNode) {
-                // Paste new node with a new ID and position offset
-                setNodes((prevNodes) => [
-                    ...prevNodes,
-                    {
-                        ...copiedNode,
-                        id: `${copiedNode.id}-copy-${Date.now()}`,
-                        position: {
-                            x: copiedNode.position.x + 50,
-                            y: copiedNode.position.y + 50,
-                        },
-                        data: {
-                            ...copiedNode.data,
-                            label: `${copiedNode.data.label}_1`, // Append "_1" to label
-                        },
-                        selected: false,
+    // Copy paste logic for a selection
+    const useCopyPaste = ({ selectedNodes, selectedEdges, setNodes, setEdges }) => {
+        const [clipboard, setClipboard] = useState({ nodes: [], edges: [] });
+
+        const handleKeyDown = useCallback(
+            (event) => {
+                if (event.ctrlKey || event.metaKey) {
+                    // --- COPY ---
+                    if (event.key === "c") {
+                        if (selectedNodes.length > 0) {
+                            const selectedNodeIds = selectedNodes.map((n) => n.id);
+
+                            // Keep edges that connect only between selected nodes
+                            const copiedEdges = selectedEdges.filter(
+                                (e) =>
+                                    selectedNodeIds.includes(e.source) &&
+                                    selectedNodeIds.includes(e.target)
+                            );
+
+                            setClipboard({
+                                nodes: selectedNodes,
+                                edges: copiedEdges,
+                            });
+                        }
                     }
-                ]);
-            }
-        }
-    }, [copiedNode, selectedNodes, setNodes]);
+
+                    // --- PASTE ---
+                    if (event.key === "v" && clipboard.nodes.length > 0) {
+                        const idMap = new Map();
+
+                        setNodes((prevNodes) => {
+                            const newNodes = clipboard.nodes.map((node) => {
+                                const newId = `${node.id}-copy-${Date.now()}-${Math.random()}`;
+                                idMap.set(node.id, newId);
+
+                                return {
+                                    ...node,
+                                    id: newId,
+                                    position: {
+                                        x: node.position.x + 50,
+                                        y: node.position.y + 50,
+                                    },
+                                    data: {
+                                        ...node.data,
+                                        label: `${node.data.label}_1`,
+                                    },
+                                    selected: false,
+                                };
+                            });
+
+                            return [...prevNodes, ...newNodes];
+                        });
+
+                        setEdges((prevEdges) => {
+                            const newEdges = clipboard.edges.map((edge) => ({
+                                ...edge,
+                                id: `${edge.id}-copy-${Date.now()}-${Math.random()}`,
+                                source: idMap.get(edge.source) || edge.source,
+                                target: idMap.get(edge.target) || edge.target,
+                                selected: false,
+                            }));
+
+                            return [...prevEdges, ...newEdges];
+                        });
+                    }
+                }
+            },
+            [clipboard, selectedNodes, selectedEdges, setNodes, setEdges]
+        );
+
+        return handleKeyDown;
+    };
+
+    const handleKeyDown = useCopyPaste({
+        selectedNodes,
+        selectedEdges,
+        setNodes,
+        setEdges,
+    });
 
     useEffect(() => {
-        fetchSites();
         document.addEventListener("keydown", handleKeyDown);
         return () => document.removeEventListener("keydown", handleKeyDown);
     }, [handleKeyDown]);
 
+    // Handles logic to save schema
     const handleSaveSchema = async () => {
         const schema = {
             electric_vehicles_def: {},
             buildings: {}
         };
 
+        // Creates json with the schema information on the canvas
         nodes.forEach((node) => {
             switch (node.data.type) {
                 case "ev": {
@@ -474,7 +558,7 @@ export default function SchemaPage() {
             id: `${nodes.length + 1}`,
             type: "customNode",
             position,
-            data: { icon, label, type, formData },
+            data: { icon, label, type, formData, collapsed: false },
             draggable: true,
         };
 
@@ -594,10 +678,11 @@ export default function SchemaPage() {
                     <div style={{ display: "flex", paddingTop: 10, height: "80vh" }}>
                         <Sidebar onDragStart={onDragStart} />
                         <div style={{ flexGrow: 1, background: "#fff", border: "1px solid #ddd" }} onDrop={onDrop} onDragOver={(e) => e.preventDefault()}>
-                            <ReactFlow nodes={nodes} onNodesChange={onNodesChange} edges={edges} onEdgesChange={onEdgesChange}
+                            <ReactFlow nodes={nodes} onNodesChange={onNodesChange} edges={edges} onEdgesChange={onEdgesChange} selectionOnDrag panOnDrag={[1, 2]}
                                 onConnect={onConnect} onSelectionChange={handleSelectionChange} fitView nodeTypes={{ customNode: CustomNode }}>
                                 <Background />
                                 <Controls />
+                                <DeleteKeyHandler />
                             </ReactFlow>
                         </div>
                     </div>

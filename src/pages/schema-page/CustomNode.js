@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
     Handle,
-    Position
+    Position,
+    useReactFlow
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Button, Form } from "react-bootstrap";
 import { FaArrowUp, FaArrowDown, FaPlus } from "react-icons/fa";
 
-
 const getInitialFormData = (type, id, data) => {
+    // Deafult data for all components
     const defaultFormData = {
         building: {
             energy_simulation: `Building_${id}.csv`,
@@ -206,7 +207,7 @@ const CustomNode = ({ data, id, selected }) => {
         const { name, value } = e.target;
         data.formData[name] = value;
     };
-    
+
     return (
         <div
             style={{
@@ -222,388 +223,77 @@ const CustomNode = ({ data, id, selected }) => {
                 transition: "max-height 0.3s ease"
             }}>
             {/* Header */}
-            <NodeHeader data={data} />
+            <NodeHeader id={id} data={data} />
 
-            <div style={{
-                overflowY: "auto",
-                maxHeight: "350px",
-            }}>
-                {/* Building Form */}
-                {data.type === "building" && (
-                    <div style={{ textAlign: "left", fontSize: "12px" }}>
-                        <label className="mb-1">Energy Simualtion File:</label>
-                        <input className="mb-1" type="text" name="energy_simulation" aria-label="Energy Simulation File" value={formData.energy_simulation} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+            {!data.collapsed &&
+                <div style={{
+                    overflowY: "auto",
+                    maxHeight: "350px",
+                }}>
+                    {/* Building Form */}
+                    {data.type === "building" && (
+                        <div style={{ textAlign: "left", fontSize: "12px" }}>
+                            <label className="mb-1">Energy Simualtion File:</label>
+                            <input className="mb-1" type="text" name="energy_simulation" aria-label="Energy Simulation File" value={formData.energy_simulation} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
-                        <label className="mb-1">Weather File:</label>
-                        <input className="mb-1" type="text" name="weather" aria-label="Weather File" value={formData.weather} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                            <label className="mb-1">Weather File:</label>
+                            <input className="mb-1" type="text" name="weather" aria-label="Weather File" value={formData.weather} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
-                        <label className="mb-1">Carbon Intensity File:</label>
-                        <input className="mb-1" type="text" name="carbon_intensity" aria-label="Carbon Intensity File" value={formData.carbon_intensity} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                            <label className="mb-1">Carbon Intensity File:</label>
+                            <input className="mb-1" type="text" name="carbon_intensity" aria-label="Carbon Intensity File" value={formData.carbon_intensity} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
-                        <label className="mb-1">Pricing File:</label>
-                        <input className="mb-1" type="text" name="pricing" aria-label="Pricing File" value={formData.pricing} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                            <label className="mb-1">Pricing File:</label>
+                            <input className="mb-1" type="text" name="pricing" aria-label="Pricing File" value={formData.pricing} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
-                        <label className="mb-1">Inactive Observations:</label>
-                        <Selector name={"Observation"} data={data} options={observations} setOptions={setObservations} />
+                            <label className="mb-1">Inactive Observations:</label>
+                            <Selector name={"Observation"} data={data} options={observations} setOptions={setObservations} />
 
-                        <label className="mb-1">Inactive Actions:</label>
-                        <Selector name={"Action"} data={data} options={actions} setOptions={setActions} />
-                    </div>
-                )}
+                            <label className="mb-1">Inactive Actions:</label>
+                            <Selector name={"Action"} data={data} options={actions} setOptions={setActions} />
+                        </div>
+                    )}
 
-                {/* EV Form */}
-                {data.type === "ev" && (
-                    <div style={{ textAlign: "left", fontSize: "12px" }}>
-                        <label className="mb-1">File Name:</label>
-                        <input className="mb-1" type="text" name="energy_simulation" aria-label={"energy_simulation"} value={formData.energy_simulation} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                    {/* EV Form */}
+                    {data.type === "ev" && (
+                        <div style={{ textAlign: "left", fontSize: "12px" }}>
+                            <label className="mb-1">File Name:</label>
+                            <input className="mb-1" type="text" name="energy_simulation" aria-label={"energy_simulation"} value={formData.energy_simulation} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
-                        <label className="mb-1">Battery Capacity (kWh):</label>
-                        <input className="mb-1" type="number" name="capacity" aria-label={"capacity"} value={formData.capacity} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                            <label className="mb-1">Battery Capacity (kWh):</label>
+                            <input className="mb-1" type="number" name="capacity" aria-label={"capacity"} value={formData.capacity} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
-                        <label className="mb-1">Battery Nominal Power (kW):</label>
-                        <input className="mb-1" type="number" name="nominal_power" aria-label={"nominal_power"} value={formData.nominal_power} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                            <label className="mb-1">Battery Nominal Power (kW):</label>
+                            <input className="mb-1" type="number" name="nominal_power" aria-label={"nominal_power"} value={formData.nominal_power} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
-                        <label className="mb-1">Battery Initial SOC:</label>
-                        <input className="mb-1" type="number" step="0.01" name="initial_soc" aria-label={"initial_soc"} value={formData.initial_soc} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                            <label className="mb-1">Battery Initial SOC:</label>
+                            <input className="mb-1" type="number" step="0.01" name="initial_soc" aria-label={"initial_soc"} value={formData.initial_soc} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
 
-                        <label className="mb-1">Battery Depth of Discharge:</label>
-                        <input className="mb-1" type="number" step="0.01" name="depth_of_discharge" aria-label={"depth_of_discharge"} value={formData.depth_of_discharge} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
-                    </div>
-                )}
+                            <label className="mb-1">Battery Depth of Discharge:</label>
+                            <input className="mb-1" type="number" step="0.01" name="depth_of_discharge" aria-label={"depth_of_discharge"} value={formData.depth_of_discharge} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+                        </div>
+                    )}
 
-                {/* PV Form */}
-                {data.type === "pv" && (
-                    <div style={{ textAlign: "left", fontSize: "12px" }}>
-                        <label className="mb-1">Type:</label>
-                        <select aria-label="select"
-                            value={selectedPVType}
-                            onChange={(e) => {
-                                const selectedIndex = e.target.selectedIndex;
-                                handleChange(e, selectedIndex);
-                                setFormData({ ...formData, types: [e.target.value] });
-                            }}
-                            style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
-                        >
-                            {allowedTypes[data.type]?.map((type) => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
+                    {/* PV Form */}
+                    {data.type === "pv" && (
+                        <div style={{ textAlign: "left", fontSize: "12px" }}>
+                            <label className="mb-1">Type:</label>
+                            <select aria-label="select"
+                                value={selectedPVType}
+                                onChange={(e) => {
+                                    const selectedIndex = e.target.selectedIndex;
+                                    handleChange(e, selectedIndex);
+                                    setFormData({ ...formData, types: [e.target.value] });
+                                }}
+                                style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
+                            >
+                                {allowedTypes[data.type]?.map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </select>
 
-                        {typesAttributes[selectedPVType]?.map(({ name, type, label, defaultValue }) => (
-                            <div key={name}>
-                                <label className="mb-1">{label}:</label>
-                                <input
-                                    className="mb-1"
-                                    type={type}
-                                    name={name}
-                                    value={formData[name] || defaultValue}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    style={{ width: "100%" }}
-                                    aria-label={name}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Charger Form */}
-                {data.type === "charger" && (
-                    <div style={{ textAlign: "left", fontSize: "12px" }}>
-                        <label className="mb-1">Type:</label>
-                        <select aria-label="select"
-                            value={selectedChargerType}
-                            onChange={(e) => {
-                                const selectedIndex = e.target.selectedIndex;
-                                handleChange(e, selectedIndex);
-                                setFormData({ ...formData, types: [e.target.value] });
-                            }}
-                            style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
-                        >
-                            {allowedTypes[data.type]?.map((type) => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
-
-                        {typesAttributes[selectedChargerType]?.map(({ name, type, label, defaultValue }) => (
-                            <div key={name}>
-                                <label className="mb-1">{label}:</label>
-
-                                {(type != "table" && type != "select") &&
-                                    <input
-                                        className="mb-1"
-                                        type={type}
-                                        name={name}
-                                        value={formData[name] || defaultValue}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        style={{ width: "100%" }}
-                                        aria-label="Charger"
-                                    />
-                                }
-
-                                {(type == "select") &&
-                                    <ChargerSelector data={data} />
-                                }
-
-                                {(type == "table") &&
-                                    <>
-                                        <TableInput name={name} data={data} formData={formData} setFormData={setFormData} />
-                                    </>
-                                }
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Cooling Device Form */}
-                {data.type === "cooling_device" && (
-                    <div style={{ textAlign: "left", fontSize: "12px" }}>
-                        <label className="mb-1">Type:</label>
-                        <select aria-label="select"
-                            value={selectedCoolingDeviceType}
-                            onChange={(e) => {
-                                const selectedIndex = e.target.selectedIndex;
-                                handleChange(e, selectedIndex);
-                                setFormData({ ...formData, types: [e.target.value] });
-                            }}
-                            style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
-                        >
-                            {allowedTypes[data.type]?.map((type) => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
-
-                        <label className="mb-1">Safety Factor:</label>
-                        <input className="mb-1" type="text" name="safety_factor" aria-label={"safety_factor"} value={formData.safety_factor} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
-
-                        {typesAttributes[selectedCoolingDeviceType]?.map(({ name, type, label, defaultValue }) => (
-                            <div key={name}>
-                                <label className="mb-1">{label}:</label>
-                                <input
-                                    className="mb-1"
-                                    type={type}
-                                    name={name}
-                                    value={formData[name] || defaultValue}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    style={{ width: "100%" }}
-                                    aria-label={name}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Heating Device Form */}
-                {data.type === "heating_device" && (
-                    <div style={{ textAlign: "left", fontSize: "12px" }}>
-                        <label className="mb-1">Type:</label>
-                        <select aria-label="select"
-                            value={selectedHeatingDeviceType}
-                            onChange={(e) => {
-                                const selectedIndex = e.target.selectedIndex;
-                                handleChange(e, selectedIndex);
-                                setFormData({ ...formData, types: [e.target.value] });
-                            }}
-                            style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
-                        >
-                            {allowedTypes[data.type]?.map((type) => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
-
-                        <label className="mb-1">Safety Factor:</label>
-                        <input className="mb-1" type="text" name="safety_factor" aria-label={"safety_factor"} value={formData.safety_factor} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
-
-                        {typesAttributes[selectedHeatingDeviceType]?.map(({ name, type, label, defaultValue }) => (
-                            <div key={name}>
-                                <label className="mb-1">{label}:</label>
-                                <input
-                                    className="mb-1"
-                                    type={type}
-                                    name={name}
-                                    value={formData[name] || defaultValue}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    style={{ width: "100%" }}
-                                    aria-label={name}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* DHW Device Form */}
-                {data.type === "dhw_device" && (
-                    <div style={{ textAlign: "left", fontSize: "12px" }}>
-                        <label className="mb-1">Type:</label>
-                        <select aria-label="select"
-                            value={selectedDHWDeviceType}
-                            onChange={(e) => {
-                                const selectedIndex = e.target.selectedIndex;
-                                handleChange(e, selectedIndex);
-                                setFormData({ ...formData, types: [e.target.value] });
-                            }}
-                            style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
-                        >
-                            {allowedTypes[data.type]?.map((type) => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
-
-                        <label className="mb-1">Safety Factor:</label>
-                        <input className="mb-1" type="text" name="safety_factor" aria-label={"safety_factor"} value={formData.safety_factor} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
-
-                        {typesAttributes[selectedDHWDeviceType]?.map(({ name, type, label, defaultValue }) => (
-                            <div key={name}>
-                                <label className="mb-1">{label}:</label>
-                                <input
-                                    className="mb-1"
-                                    type={type}
-                                    name={name}
-                                    value={formData[name] || defaultValue}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    style={{ width: "100%" }}
-                                    aria-label={name}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* DHW Storage Form */}
-                {data.type === "dhw_storage" && (
-                    <div style={{ textAlign: "left", fontSize: "12px" }}>
-                        <label className="mb-1">Type:</label>
-                        <select aria-label="select"
-                            value={selectedDHWStorageType}
-                            onChange={(e) => {
-                                const selectedIndex = e.target.selectedIndex;
-                                handleChange(e, selectedIndex);
-                                setFormData({ ...formData, types: [e.target.value] });
-                            }}
-                            style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
-                        >
-                            {allowedTypes[data.type]?.map((type) => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
-
-                        {typesAttributes[selectedDHWStorageType]?.map(({ name, type, label, defaultValue }) => (
-                            <div key={name}>
-                                <label className="mb-1">{label}:</label>
-                                <input
-                                    className="mb-1"
-                                    type={type}
-                                    name={name}
-                                    value={formData[name] || defaultValue}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    style={{ width: "100%" }}
-                                    aria-label={name}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Cooling Storage Form */}
-                {data.type === "cooling_storage" && (
-                    <div style={{ textAlign: "left", fontSize: "12px" }}>
-                        <label className="mb-1">Type:</label>
-                        <select aria-label="select"
-                            value={selectedCoolingStorageType}
-                            onChange={(e) => {
-                                const selectedIndex = e.target.selectedIndex;
-                                handleChange(e, selectedIndex);
-                                setFormData({ ...formData, types: [e.target.value] });
-                            }}
-                            style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
-                        >
-                            {allowedTypes[data.type]?.map((type) => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
-
-                        {typesAttributes[selectedCoolingStorageType]?.map(({ name, type, label, defaultValue }) => (
-                            <div key={name}>
-                                <label className="mb-1">{label}:</label>
-                                <input
-                                    className="mb-1"
-                                    type={type}
-                                    name={name}
-                                    value={formData[name] || defaultValue}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    style={{ width: "100%" }}
-                                    aria-label={name}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Heating Storage Form */}
-                {data.type === "heating_storage" && (
-                    <div style={{ textAlign: "left", fontSize: "12px" }}>
-                        <label className="mb-1">Type:</label>
-                        <select aria-label="select"
-                            value={selectedHeatingStorageType}
-                            onChange={(e) => {
-                                const selectedIndex = e.target.selectedIndex;
-                                handleChange(e, selectedIndex);
-                                setFormData({ ...formData, types: [e.target.value] });
-                            }}
-                            style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
-                        >
-                            {allowedTypes[data.type]?.map((type) => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
-
-                        {typesAttributes[selectedHeatingStorageType]?.map(({ name, type, label, defaultValue }) => (
-                            <div key={name}>
-                                <label className="mb-1">{label}:</label>
-                                <input
-                                    className="mb-1"
-                                    type={type}
-                                    name={name}
-                                    value={formData[name] || defaultValue}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    style={{ width: "100%" }}
-                                    aria-label={name}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Electrical Storage Form */}
-                {data.type === "electrical_storage" && (
-                    <div style={{ textAlign: "left", fontSize: "12px" }}>
-                        <label className="mb-1">Type:</label>
-                        <select aria-label="select"
-                            value={selectedElectricalStorageType}
-                            onChange={(e) => {
-                                const selectedIndex = e.target.selectedIndex;
-                                handleChange(e, selectedIndex);
-                                setFormData({ ...formData, types: [e.target.value] });
-                            }}
-                            style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
-                        >
-                            {allowedTypes[data.type]?.map((type) => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
-
-                        {typesAttributes[selectedElectricalStorageType]?.map(({ name, type, label, defaultValue }) => (
-                            <div key={name}>
-                                <label className="mb-1">{label}:</label>
-
-                                {(type != "table") &&
+                            {typesAttributes[selectedPVType]?.map(({ name, type, label, defaultValue }) => (
+                                <div key={name}>
+                                    <label className="mb-1">{label}:</label>
                                     <input
                                         className="mb-1"
                                         type={type}
@@ -614,18 +304,331 @@ const CustomNode = ({ data, id, selected }) => {
                                         style={{ width: "100%" }}
                                         aria-label={name}
                                     />
-                                }
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                                {(type == "table") &&
-                                    <>
-                                        <TableInput name={name} data={data} formData={formData} setFormData={setFormData} />
-                                    </>
-                                }
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+                    {/* Charger Form */}
+                    {data.type === "charger" && (
+                        <div style={{ textAlign: "left", fontSize: "12px" }}>
+                            <label className="mb-1">Type:</label>
+                            <select aria-label="select"
+                                value={selectedChargerType}
+                                onChange={(e) => {
+                                    const selectedIndex = e.target.selectedIndex;
+                                    handleChange(e, selectedIndex);
+                                    setFormData({ ...formData, types: [e.target.value] });
+                                }}
+                                style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
+                            >
+                                {allowedTypes[data.type]?.map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </select>
+
+                            {typesAttributes[selectedChargerType]?.map(({ name, type, label, defaultValue }) => (
+                                <div key={name}>
+                                    <label className="mb-1">{label}:</label>
+
+                                    {(type != "table" && type != "select") &&
+                                        <input
+                                            className="mb-1"
+                                            type={type}
+                                            name={name}
+                                            value={formData[name] || defaultValue}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            style={{ width: "100%" }}
+                                            aria-label="Charger"
+                                        />
+                                    }
+
+                                    {(type == "select") &&
+                                        <ChargerSelector data={data} />
+                                    }
+
+                                    {(type == "table") &&
+                                        <>
+                                            <TableInput name={name} data={data} formData={formData} setFormData={setFormData} />
+                                        </>
+                                    }
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Cooling Device Form */}
+                    {data.type === "cooling_device" && (
+                        <div style={{ textAlign: "left", fontSize: "12px" }}>
+                            <label className="mb-1">Type:</label>
+                            <select aria-label="select"
+                                value={selectedCoolingDeviceType}
+                                onChange={(e) => {
+                                    const selectedIndex = e.target.selectedIndex;
+                                    handleChange(e, selectedIndex);
+                                    setFormData({ ...formData, types: [e.target.value] });
+                                }}
+                                style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
+                            >
+                                {allowedTypes[data.type]?.map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </select>
+
+                            <label className="mb-1">Safety Factor:</label>
+                            <input className="mb-1" type="text" name="safety_factor" aria-label={"safety_factor"} value={formData.safety_factor} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+
+                            {typesAttributes[selectedCoolingDeviceType]?.map(({ name, type, label, defaultValue }) => (
+                                <div key={name}>
+                                    <label className="mb-1">{label}:</label>
+                                    <input
+                                        className="mb-1"
+                                        type={type}
+                                        name={name}
+                                        value={formData[name] || defaultValue}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        style={{ width: "100%" }}
+                                        aria-label={name}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Heating Device Form */}
+                    {data.type === "heating_device" && (
+                        <div style={{ textAlign: "left", fontSize: "12px" }}>
+                            <label className="mb-1">Type:</label>
+                            <select aria-label="select"
+                                value={selectedHeatingDeviceType}
+                                onChange={(e) => {
+                                    const selectedIndex = e.target.selectedIndex;
+                                    handleChange(e, selectedIndex);
+                                    setFormData({ ...formData, types: [e.target.value] });
+                                }}
+                                style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
+                            >
+                                {allowedTypes[data.type]?.map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </select>
+
+                            <label className="mb-1">Safety Factor:</label>
+                            <input className="mb-1" type="text" name="safety_factor" aria-label={"safety_factor"} value={formData.safety_factor} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+
+                            {typesAttributes[selectedHeatingDeviceType]?.map(({ name, type, label, defaultValue }) => (
+                                <div key={name}>
+                                    <label className="mb-1">{label}:</label>
+                                    <input
+                                        className="mb-1"
+                                        type={type}
+                                        name={name}
+                                        value={formData[name] || defaultValue}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        style={{ width: "100%" }}
+                                        aria-label={name}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* DHW Device Form */}
+                    {data.type === "dhw_device" && (
+                        <div style={{ textAlign: "left", fontSize: "12px" }}>
+                            <label className="mb-1">Type:</label>
+                            <select aria-label="select"
+                                value={selectedDHWDeviceType}
+                                onChange={(e) => {
+                                    const selectedIndex = e.target.selectedIndex;
+                                    handleChange(e, selectedIndex);
+                                    setFormData({ ...formData, types: [e.target.value] });
+                                }}
+                                style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
+                            >
+                                {allowedTypes[data.type]?.map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </select>
+
+                            <label className="mb-1">Safety Factor:</label>
+                            <input className="mb-1" type="text" name="safety_factor" aria-label={"safety_factor"} value={formData.safety_factor} onChange={handleChange} onBlur={handleBlur} style={{ width: "100%" }} />
+
+                            {typesAttributes[selectedDHWDeviceType]?.map(({ name, type, label, defaultValue }) => (
+                                <div key={name}>
+                                    <label className="mb-1">{label}:</label>
+                                    <input
+                                        className="mb-1"
+                                        type={type}
+                                        name={name}
+                                        value={formData[name] || defaultValue}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        style={{ width: "100%" }}
+                                        aria-label={name}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* DHW Storage Form */}
+                    {data.type === "dhw_storage" && (
+                        <div style={{ textAlign: "left", fontSize: "12px" }}>
+                            <label className="mb-1">Type:</label>
+                            <select aria-label="select"
+                                value={selectedDHWStorageType}
+                                onChange={(e) => {
+                                    const selectedIndex = e.target.selectedIndex;
+                                    handleChange(e, selectedIndex);
+                                    setFormData({ ...formData, types: [e.target.value] });
+                                }}
+                                style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
+                            >
+                                {allowedTypes[data.type]?.map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </select>
+
+                            {typesAttributes[selectedDHWStorageType]?.map(({ name, type, label, defaultValue }) => (
+                                <div key={name}>
+                                    <label className="mb-1">{label}:</label>
+                                    <input
+                                        className="mb-1"
+                                        type={type}
+                                        name={name}
+                                        value={formData[name] || defaultValue}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        style={{ width: "100%" }}
+                                        aria-label={name}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Cooling Storage Form */}
+                    {data.type === "cooling_storage" && (
+                        <div style={{ textAlign: "left", fontSize: "12px" }}>
+                            <label className="mb-1">Type:</label>
+                            <select aria-label="select"
+                                value={selectedCoolingStorageType}
+                                onChange={(e) => {
+                                    const selectedIndex = e.target.selectedIndex;
+                                    handleChange(e, selectedIndex);
+                                    setFormData({ ...formData, types: [e.target.value] });
+                                }}
+                                style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
+                            >
+                                {allowedTypes[data.type]?.map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </select>
+
+                            {typesAttributes[selectedCoolingStorageType]?.map(({ name, type, label, defaultValue }) => (
+                                <div key={name}>
+                                    <label className="mb-1">{label}:</label>
+                                    <input
+                                        className="mb-1"
+                                        type={type}
+                                        name={name}
+                                        value={formData[name] || defaultValue}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        style={{ width: "100%" }}
+                                        aria-label={name}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Heating Storage Form */}
+                    {data.type === "heating_storage" && (
+                        <div style={{ textAlign: "left", fontSize: "12px" }}>
+                            <label className="mb-1">Type:</label>
+                            <select aria-label="select"
+                                value={selectedHeatingStorageType}
+                                onChange={(e) => {
+                                    const selectedIndex = e.target.selectedIndex;
+                                    handleChange(e, selectedIndex);
+                                    setFormData({ ...formData, types: [e.target.value] });
+                                }}
+                                style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
+                            >
+                                {allowedTypes[data.type]?.map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </select>
+
+                            {typesAttributes[selectedHeatingStorageType]?.map(({ name, type, label, defaultValue }) => (
+                                <div key={name}>
+                                    <label className="mb-1">{label}:</label>
+                                    <input
+                                        className="mb-1"
+                                        type={type}
+                                        name={name}
+                                        value={formData[name] || defaultValue}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        style={{ width: "100%" }}
+                                        aria-label={name}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Electrical Storage Form */}
+                    {data.type === "electrical_storage" && (
+                        <div style={{ textAlign: "left", fontSize: "12px" }}>
+                            <label className="mb-1">Type:</label>
+                            <select aria-label="select"
+                                value={selectedElectricalStorageType}
+                                onChange={(e) => {
+                                    const selectedIndex = e.target.selectedIndex;
+                                    handleChange(e, selectedIndex);
+                                    setFormData({ ...formData, types: [e.target.value] });
+                                }}
+                                style={{ padding: "5px 10px", cursor: "pointer", border: "1px solid #ccc", borderRadius: "5px", width: "100%" }}
+                            >
+                                {allowedTypes[data.type]?.map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </select>
+
+                            {typesAttributes[selectedElectricalStorageType]?.map(({ name, type, label, defaultValue }) => (
+                                <div key={name}>
+                                    <label className="mb-1">{label}:</label>
+
+                                    {(type != "table") &&
+                                        <input
+                                            className="mb-1"
+                                            type={type}
+                                            name={name}
+                                            value={formData[name] || defaultValue}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            style={{ width: "100%" }}
+                                            aria-label={name}
+                                        />
+                                    }
+
+                                    {(type == "table") &&
+                                        <>
+                                            <TableInput name={name} data={data} formData={formData} setFormData={setFormData} />
+                                        </>
+                                    }
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            }
 
             {/* Connection Handles */}
             <Handle type="source" position={Position.Top} id="top-source" style={{ background: "#555" }} />
@@ -643,8 +646,9 @@ const CustomNode = ({ data, id, selected }) => {
     );
 };
 
+const NodeHeader = ({ id, data }) => {
+    const { setNodes } = useReactFlow();
 
-const NodeHeader = ({ data }) => {
     const [editing, setEditing] = useState(false);
     const [label, setLabel] = useState(data.label);
 
@@ -654,37 +658,60 @@ const NodeHeader = ({ data }) => {
         setEditing(false);
     };
 
+    const toggleCollapse = () => {
+        setNodes((nds) =>
+            nds.map((n) =>
+                n.id === id ? { ...n, data: { ...n.data, collapsed: !n.data.collapsed } } : n
+            )
+        );
+    };
+
     return (
-        <div
-            style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "5px",
-                fontWeight: "bold"
-            }}
-            onDoubleClick={() => setEditing(true)}
-        >
-            {data.icon}
-            {editing ? (
-                <input
-                    type="text"
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                    onBlur={handleBlur}
-                    autoFocus
+        <>
+            <div className="d-flex justify-content-between">
+                <div
                     style={{
-                        marginLeft: 5,
-                        border: "none",
-                        outline: "none",
-                        fontWeight: "bold",
-                        background: "transparent",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "5px",
+                        fontWeight: "bold"
                     }}
-                />
-            ) : (
-                <span style={{ marginLeft: 5 }}>{label}</span>
-            )}
-        </div>
+                    onDoubleClick={() => setEditing(true)}
+                >
+                    {data.icon}
+                    {editing ? (
+                        <input
+                            type="text"
+                            value={label}
+                            onChange={(e) => setLabel(e.target.value)}
+                            onBlur={handleBlur}
+                            autoFocus
+                            style={{
+                                marginLeft: 5,
+                                border: "none",
+                                outline: "none",
+                                fontWeight: "bold",
+                                background: "transparent",
+                            }}
+                        />
+                    ) : (
+                        <span style={{ marginLeft: 5 }}>{label}</span>
+                    )}
+                </div>
+                <button
+                    onClick={toggleCollapse}
+                    style={{
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        padding: 0,
+                    }}
+                >
+                    {data.collapsed ? <i className="fa fa-angle-down" size={16} /> : <i className="fa fa-angle-up" size={16} />}
+                </button>
+            </div>
+        </>
     );
 };
 

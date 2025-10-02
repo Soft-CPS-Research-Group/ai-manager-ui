@@ -55,7 +55,7 @@ function RecDashboard() {
     const files = Array.from(event.target.files);
     const folderNames = new Set();
 
-    // Step 1: Group files by folder name (Simulation_1, Simulation_2, etc.)
+    // Group files by folder name (Simulation_1, Simulation_2, etc.)
     const simulations = {};
 
     files.forEach(file => {
@@ -287,6 +287,7 @@ function RecDashboard() {
   );
 }
 
+// List created based on the buildings and equipments present on the folder
 const DynamicTreeList = ({ folderData, selectedEpisode, setSelectedGraph, setSelectedEquipment }) => {
   const [openBuildings, setOpenBuildings] = useState({});
   const [openEVs, setOpenEVs] = useState(false);

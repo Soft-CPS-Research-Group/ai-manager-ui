@@ -221,6 +221,7 @@ const aggregateChargerData = (headquartersData) => {
   return x;
 };
 
+// List of the buildings and equipments based on the data provided by the database
 const IChargingTreeList = ({ data, setSelectedGraph }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);

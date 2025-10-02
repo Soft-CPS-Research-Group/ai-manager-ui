@@ -19,7 +19,6 @@ import RecDashboard from "pages/dashboard-page/RecDashboard.js";
 import UseCases from "pages/use-cases-page/UseCases.js";
 import KPIs from "pages/kpis-page/KPIs.js";
 import Maps from "pages/map-page/Maps.js";
-import SimualtionListPage from "pages/simulation-list-page/SimualtionListPage.js";
 import DatasetsPage from "pages/datasets-page/DatasetsPage.js";
 import SchemaPage from "pages/schema-page/SchemaPage.js";
 import ExperimentConfigsPage from "pages/experiment-configs-page/ExperimentConfigsPage.js";
@@ -50,14 +49,6 @@ const dashboardRoutes = [
     layout: "/admin",
     userType: "ai-engineer"
   },
-  // {
-  //   path: "/simulation-list",
-  //   name: "Simulations",
-  //   icon: "nc-icon nc-paper-2",
-  //   component: SimualtionListPage,
-  //   layout: "/admin",
-  //   userType: "ai-engineer"
-  // },
   {
     path: "/run-simulations",
     name: "Run Simulations",
@@ -91,7 +82,7 @@ const dashboardRoutes = [
     userType: "rec-manager"
   },
   {
-    path: "/schema",
+    path: "/schema-page",
     name: "Schema",
     icon: "nc-icon nc-puzzle-10",
     component: SchemaPage,

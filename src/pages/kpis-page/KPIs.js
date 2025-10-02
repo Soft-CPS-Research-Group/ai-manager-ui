@@ -89,6 +89,7 @@ function KPIs() {
     setComparisonSimulation(result);
   };
 
+  // When uploading a folder, converts the contents to a more suitable format
   const handleFolderUpload = async (event) => {
     const files = Array.from(event.target.files);
     const folderNames = new Set();

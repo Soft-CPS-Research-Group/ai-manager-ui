@@ -27,7 +27,7 @@ function Sidebar({ color, image, routes }) {
     return location.pathname.indexOf(routeName) > -1 ? "active" : "";
   };
 
-  // 💡 Set page title based on current route
+  // Set page title based on current route
   useEffect(() => {
     const currentRoute = routes.find((route) =>
       location.pathname.includes(route.layout + route.path)

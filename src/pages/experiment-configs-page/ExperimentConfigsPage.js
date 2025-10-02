@@ -29,7 +29,7 @@ function ExperimentConfigsPage() {
     };
     const fileNameIsValid = isValidFileName(fileName);
 
-    //Pagination Settings
+    // Pagination Settings
     const itemsPerPage = 10;
     const [currentPage, setCurrentPage] = useState(0);
 
@@ -41,6 +41,7 @@ function ExperimentConfigsPage() {
         fetchConfigs();
     }, []);
 
+    // Get config list
     const fetchConfigs = async () => {
         setLoading(true);
         try {
@@ -60,6 +61,7 @@ function ExperimentConfigsPage() {
         }
     };
 
+    // Get config details
     const fetchConfigDetails = async (config) => {
         try {
             const res = await fetch(`experiment-config/${config}`);
@@ -82,6 +84,7 @@ function ExperimentConfigsPage() {
         }
     };
 
+    // Deletes selected config
     const handleDeleteConfirmed = async () => {
         try {
             await fetch(`experiment-config/${configToDelete}`, { method: 'DELETE' });
@@ -121,6 +124,7 @@ function ExperimentConfigsPage() {
         }
     };
 
+    // Creates new config
     const handleSaveConfig = async () => {
         try {
             const body = {

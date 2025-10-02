@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import Map, { Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Modal, Button, Row, Col, Form, Tab, ListGroup, Collapse } from 'react-bootstrap';
-import { useSpring, animated, to } from "@react-spring/web";
+import { Modal, Button, Row, Col, Form } from 'react-bootstrap';
+import { useSpring, animated } from "@react-spring/web";
 import Papa from "papaparse";
 
 const MAPBOX_TOKEN = 'pk.eyJ1Ijoiam9zZW9saXZlaXJhMTE5MDc2OSIsImEiOiJjbTJtY3d4aW0wbGh0MnJxdGE2Ym1iazZkIn0.qNlgB4YscwyTcWXyCHfliA';
@@ -312,9 +312,6 @@ const Maps = () => {
     setTimelineScript(completeScript);
     setLocationList(locations);
     setCarLocationList(carLocations);
-    console.log("Scripts:", completeScript);
-    console.log("Buildings:", locations);
-    console.log("Cars:", carLocations);
   }
 
   const runScript = (element, commands) => {

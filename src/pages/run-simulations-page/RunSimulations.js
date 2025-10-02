@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Row, Col, Card, Modal, Spinner } from "react-bootstrap";
 import { ToastContainer, toast } from 'react-toastify';
 import { FaPlay } from "react-icons/fa";
@@ -35,7 +35,7 @@ function RunSimulations() {
     const [targetContainer, setTargetContainer] = useState("");
     const [availableHosts, setAvailableHosts] = useState([]);
 
-    //Pagination Settings
+    // Pagination Settings
     const itemsPerPage = 10;
     const [currentPage, setCurrentPage] = useState(0);
 
@@ -56,6 +56,7 @@ function RunSimulations() {
         }
     }, [jobList]);
 
+    // Get hosts list
     const fetchHosts = async () => {
         try {
             const res = await fetch("hosts");
@@ -73,6 +74,7 @@ function RunSimulations() {
         }
     };
 
+    // Get config files
     const fetchFiles = async () => {
         try {
             const res = await fetch("experiment-configs");
@@ -90,6 +92,7 @@ function RunSimulations() {
         }
     };
 
+    // Get job list
     const fetchJobs = async () => {
         setLoading(true);
         try {
@@ -109,22 +112,7 @@ function RunSimulations() {
         }
     };
 
-    const fetchJobInfo = async () => {
-        try {
-            const res = await fetch(`job-info/${selectedJob}`);
-            const json = await res.json();
-            if (json) {
-                setJobList(json);
-            }
-        } catch (err) {
-            toast.error('Failed to fetch the job info.', {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false
-            });
-        }
-    };
-
+    // Get job progress
     const fetchJobProgress = async (job) => {
         try {
             const res = await fetch(`progress/${job}`);
@@ -133,7 +121,6 @@ function RunSimulations() {
             }
             const json = await res.json();
 
-            // update only this job’s entry
             setJobProgress((prev) => ({
                 ...prev,
                 [job]: {
@@ -158,6 +145,7 @@ function RunSimulations() {
         });
     };
 
+    // Get job results
     const fetchJobResults = async (job) => {
         try {
             const res = await fetch(`result/${job}`);
@@ -175,6 +163,7 @@ function RunSimulations() {
         }
     };
 
+    // Get job logs and file logs
     const fetchLogs = async (job) => {
         fetchJobLogs(job);
         fetchJobFileLogs(job);
@@ -213,6 +202,7 @@ function RunSimulations() {
         }
     };
 
+    // Stop job
     const handleStopConfirmed = async () => {
         try {
             await fetch(`stop/${jobToStop}`, { method: 'POST' });
@@ -234,6 +224,7 @@ function RunSimulations() {
         }
     };
 
+    // Delete job
     const handleDeleteConfirmed = async () => {
         try {
             await fetch(`job/${jobToDelete}`, { method: 'DELETE' });
@@ -263,6 +254,7 @@ function RunSimulations() {
         setTargetContainer(e.target.value);
     }
 
+    // Runs the simulation
     const handleRunSimulation = async () => {
         try {
             const jsonOutput = {
